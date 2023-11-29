@@ -8,12 +8,12 @@
 
 clear
 
-# Github login
-echo $CODESEALER_PAT | docker login ghcr.io -u USERNAME --password-stdin
+# Github Image Registry PAT
+# $CODESEALER_TOKEN=
 
 # Public Helm Repo
-export CODESEALER_REPO=tfarinacci/codesealer-helm/main/
-# CODESEALER_REPO=code-sealer/helm-charts/main/
+export CODESEALER_HELM_REPO=tfarinacci/codesealer-helm/main/
+# CODESEALER_HELM_REPO=helm.github.codesealer.com
 
 export INGRESS_NAMESPACE=ingress-nginx
 export INGRESS_DEPLOYMENT=ingress-nginx-controller
@@ -51,9 +51,10 @@ if [[ "$1" == "install" ]]; then
   echo "########################################################################################"
   read -s -t 10 -p '?Press any key to continue.'
   # Install Codesealer helm repo
-  helm repo add codesealer https://raw.githubusercontent.com/${CODESEALER_REPO}
+  helm repo add codesealer https://raw.githubusercontent.com/${CODESEALER_HELM_REPO}
   # Install Codsealer
   helm install codesealer-1 codesealer/codesealer --create-namespace --namespace codesealer-system \
+    --set codesealerToken=${CODESEALER_TOKEN} \
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
     --set worker.config.waf.wafMonitorMode=false \
     --set worker.config.waf.enableWaf=true \
