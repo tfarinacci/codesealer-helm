@@ -124,6 +124,7 @@ elif [[ "$1" == "upgrade" ]]; then
   echo "########################################################################################"
   helm repo update codesealer
   helm upgrade codesealer-1 codesealer/codesealer --namespace codesealer-system \
+    --set codesealerToken=${CODESEALER_TOKEN} \
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
     --set worker.config.waf.wafMonitorMode=false \
     --set worker.config.waf.enableWaf=true \
