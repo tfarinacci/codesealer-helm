@@ -56,14 +56,13 @@ if [[ "$1" == "install" ]]; then
   helm install codesealer-1 codesealer/codesealer --create-namespace --namespace codesealer-system \
     --set codesealerToken=${CODESEALER_TOKEN} \
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-    --set worker.config.waf.wafMonitorMode=false \
-    --set worker.config.waf.enableWaf=true \
-    --set worker.config.waf.wafFullTransaction=true \
-    --set worker.config.waf.paranoiaLevel=1     
+    --set worker.config.endpoint.wafMonitorMode=false \
+    --set worker.config.endpoint.enableWaf=true \
+    --set worker.config.endpoint.wafFullTransaction=true \
+    --set worker.config.endpoint.paranoiaLevel=1     
 
-    # --set worker.ingress.hostname=localhost \
-    # --set worker.ingress.hostScheme=https \
-    # --set workers.ingress.appNamespace=juice-shop \
+    # --set worker.config.endpoint.hostScheme=https \
+    # --set worker.config.endpoint.hostname=localhost \
     # --set redis.namespace=codesealer-system \
     # --set ingress.namespace=codesealer-system \
     # --set ingress.enabled=true \
@@ -126,10 +125,10 @@ elif [[ "$1" == "upgrade" ]]; then
   helm upgrade codesealer-1 codesealer/codesealer --namespace codesealer-system \
     --set codesealerToken=${CODESEALER_TOKEN} \
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-    --set worker.config.waf.wafMonitorMode=false \
-    --set worker.config.waf.enableWaf=true \
-    --set worker.config.waf.wafFullTransaction=true \
-    --set worker.config.waf.paranoiaLevel=1
+    --set worker.config.endpoint.wafMonitorMode=false \
+    --set worker.config.endpoint.enableWaf=true \
+    --set worker.config.endpoint.wafFullTransaction=true \
+    --set worker.config.endpoint.paranoiaLevel=1
 
   echo "\n########################################################################################"
   echo "#  Upgrade Codesealer"
