@@ -27,7 +27,19 @@ if [[ "$1" == "install" ]]; then
   if [ $REPLY == 'y' ]; then
     helm upgrade --install ingress-nginx ingress-nginx \
     --repo https://kubernetes.github.io/ingress-nginx \
-    --namespace $INGRESS_NAMESPACE --create-namespace
+    --namespace $INGRESS_NAMESPACE --create-namespace \
+    --set controller.hostPort.enabled=true \
+    --set controller.service.type=LoadBalancer \
+    --set controller.publishService.enabled=false \
+    --set controller.extraArgs.publish-status-address=localhost
+
+    echo "\n########################################################################################"
+    echo "#  Waiting for NGINX Ingress Controller to start"
+    echo "########################################################################################"
+    kubectl wait --namespace ingress-nginx \
+    --for=condition=ready pod \
+    --selector=app.kubernetes.io/component=controller \
+    --timeout=90s
   else
     echo "\n########################################################################################"
     echo "#  Skipping NGINX Ingress Controller installation"
@@ -37,7 +49,7 @@ if [[ "$1" == "install" ]]; then
   echo "\n########################################################################################"
   echo "#  Install OWASP Juice Shop Application"
   echo "########################################################################################"
-  read -s -t 20 -p '?Press any key to continue.'
+  read -s -t 10 -p '?Press any key to continue.'
 
   helm repo add securecodebox https://charts.securecodebox.io/
   helm install juice-shop securecodebox/juice-shop --namespace juice-shop --create-namespace \
@@ -45,6 +57,14 @@ if [[ "$1" == "install" ]]; then
     --set "ingress.hosts[0].host=localhost,ingress.hosts[0].paths[0].path=/" \
     --set "ingress.tls[0].hosts[0]=localhost,ingress.tls[0].secretName=" \
     --set ingress.pathType=Prefix
+
+  echo "\n########################################################################################"
+  echo "#  Waiting for Juice Shop to start"
+  echo "########################################################################################"
+  kubectl wait --namespace juice-shop \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/name=juice-shop \
+  --timeout=90s
 
   echo "\n########################################################################################"
   echo "#  Install Codesealer"
@@ -56,6 +76,7 @@ if [[ "$1" == "install" ]]; then
   helm install codesealer-1 codesealer/codesealer --create-namespace --namespace codesealer-system \
     --set codesealerToken=${CODESEALER_TOKEN} \
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+    --set image.pullPolicy=Always \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
     --set worker.config.endpoint.wafFullTransaction=true \
@@ -70,9 +91,12 @@ if [[ "$1" == "install" ]]; then
     # --set "ingress.hosts[0].host=core-manager.local,ingress.hosts[0].paths[0].path=/,ingress.hosts[0].paths[0].pathType=Prefix"
 
   echo "\n########################################################################################"
-  echo "#  Waiting 30 seconds for Codesealer to install"
+  echo "#  Waiting for Codesealer to start"
   echo "########################################################################################"
-  sleep 30
+  kubectl wait --namespace codesealer-system \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/name=codesealer-mutating-webhook \
+  --timeout=90s
 
   echo "\n########################################################################################"
   echo "#  Activate Codesealer by applying labels and annotations"
@@ -90,6 +114,22 @@ if [[ "$1" == "install" ]]; then
   kubectl patch deployment $INGRESS_DEPLOYMENT -n $INGRESS_NAMESPACE -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'
   echo "\n########################################################################################"
   
+  echo "\n########################################################################################"
+  echo "#  Restart NGINX Ingress Controller"
+  echo "########################################################################################"
+  read -s -t 5 -p '?Press any key to continue.'
+  kubectl scale deployment $INGRESS_DEPLOYMENT  --namespace $INGRESS_NAMESPACE --replicas=0
+  sleep 20   
+  kubectl scale deployment $INGRESS_DEPLOYMENT  --namespace $INGRESS_NAMESPACE --replicas=1
+
+  echo "\n########################################################################################"
+  echo "#  Waitinging for NGINX Ingress Controller to restart"
+  echo "########################################################################################"
+  kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=90s
+
 elif [[ "$1" == "uninstall" ]]; then
 
   echo "\n########################################################################################"
