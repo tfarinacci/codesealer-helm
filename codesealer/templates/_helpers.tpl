@@ -243,7 +243,7 @@ Create the name of the service to use
 Create service fully qualified hostname
 */}}
 {{- define "worker.service.fullname" -}}
-{{- default ( printf "%s.%s.svc" (include "worker.serviceName" .) .Values.redis.namespace ) }}
+{{- default ( printf "%s.%s.svc.cluster.local" (include "worker.serviceName" .) .Values.redis.namespace ) }}
 {{- end }}
 
 {{/*
