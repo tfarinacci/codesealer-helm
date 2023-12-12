@@ -24,7 +24,7 @@ spec:
             - containerPort: {{ .Values.redis.service.targetPort }}
               name: {{ .Values.redis.service.name }}
           command: ["redis-server"]
-          args: ["/conf/redis.conf", "--tls-cert-file /certs/tls.crt", "--tls-key-file /certs/tls.key", "--tls-ca-cert-file /certs/ca.crt"]
+          args: ["/conf/redis.conf"]
           env:
             - name: POD_IP
               valueFrom:

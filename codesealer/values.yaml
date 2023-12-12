@@ -192,7 +192,7 @@ worker:
 
   # admission secret with client certs mounted within the admission controller.
   secret:
-    create: false
+    create: true
     # name of the secret (auto-generated)
     name: codesealer-worker-tls
     type: kubernetes.io/tls
