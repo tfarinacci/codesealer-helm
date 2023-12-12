@@ -84,6 +84,7 @@ data:
     scriptPreamble = "{{ .Values.worker.config.endpoint.scriptPreamble }}"
     scriptPostamble = "{{ .Values.worker.config.endpoint.scriptPostamble }}"
     minifyBundles = {{ .Values.worker.config.endpoint.minifyBundles }}
+    cacheEnabled = {{ .Values.worker.config.endpoint.cacheEnabled }}
 
     [[endpoint.proxyPathFilter]]
     block = {{ .Values.worker.config.endpoint.proxyPathFilter.block }}
@@ -92,7 +93,6 @@ data:
     [[endpoint.protectionPathFilter]]
     bypass = {{ .Values.worker.config.endpoint.protectionPathFilter.bypass }}
     path = "{{ .Values.worker.config.endpoint.protectionPathFilter.path }}"
-    cacheEnabled = {{ .Values.worker.config.endpoint.protectionPathFilter.cacheEnabled }}
 
     [[endpoint.scriptReplace]]
     to = "{{ .Values.worker.config.endpoint.scriptReplace.to }}"

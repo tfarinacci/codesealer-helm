@@ -466,6 +466,10 @@ worker:
       # ES6 modules are bundled into a single file by the worker. This option determines
       # wheter the resulting bundle should also be minified.
       minifyBundles: true
+      # When set to 'true' this option enables the HTTP cache feature for this endpoint. See
+      # the the 'cache' section for Worker specific settings and the 'endpoint.cacheRule'
+      # section for configuration of the cache rules.
+      cacheEnabled: false
 
       # The 'endpoint.proxyPathFilter' section defines a set of rules for selectively blocking
       # requests from being proxied. The rules are processed in order, such that firewall-like
@@ -482,10 +486,6 @@ worker:
       protectionPathFilter:
         bypass: false
         path: "/"
-        # When set to 'true' this option enables the HTTP cache feature for this endpoint. See
-        # the the 'cache' section for Worker specific settings and the 'endpoint.cacheRule'
-        # section for configuration of the cache rules.
-        cacheEnabled: false
 
       # The 'endpoint.scriptReplace' section defines a set of rules for simple search and
       # replace in all scripts protected by Codesealer.

@@ -236,14 +236,14 @@ clientKey: {{ $clientKey }}
 Create the name of the service to use
 */}}
 {{- define "worker.serviceName" -}}
-{{- .Values.worker.config.endpoint.hostname | trunc 63 | trimSuffix "-" }}
+{{- .Values.redis.name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Create service fully qualified hostname
 */}}
 {{- define "worker.service.fullname" -}}
-{{- default ( printf "%s" (include "worker.serviceName" .) ) }}
+{{- default ( printf "%s.%s.svc" (include "worker.serviceName" .) .Values.redis.namespace ) }}
 {{- end }}
 
 {{/*
