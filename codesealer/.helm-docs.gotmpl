@@ -1,0 +1,45 @@
+{{- /*
+SPDX-FileCopyrightText: Codesealer
+
+SPDX-License-Identifier: Proprietary
+*/ -}}
+
+{{- define "extra.docsSection" -}}
+---
+title: "Codesealer"
+category: "target"
+type: "Website"
+state: "released"
+appVersion: "{{ template "chart.appVersion" . }}"
+usecase: "Modern insecure web application"
+---
+{{- end }}
+
+{{- define "extra.dockerDeploymentSection" -}}
+## Supported Tags
+- `latest`  (represents the latest stable release build)
+- tagged releases, e.g. `3.0.0`, `2.9.0`, `2.8.0`, `2.7.0`
+{{- end }}
+
+{{- define "extra.chartAboutSection" -}}
+## What is Codesealer?
+
+Codsealer: Codesealer is a cutting-edge cyber security company, whose mission is to 
+            minimize cyber risks and ensure hackers move on. Our end to end security 
+            solutions provide a seal that makes it near impossible for hackers to 
+            attack APIs, web applications, network communications, and end-users.
+
+**Homepage:** <https://codesealer.com>
+
+### Source Code
+
+* <https://github.com/codesealer/main/>
+
+{{- end }}
+
+{{- define "extra.scannerConfigurationSection" -}}{{- end }}
+
+{{- define "extra.chartConfigurationSection" -}}{{- end }}
+
+{{- define "extra.scannerLinksSection" -}}
+{{- end }}
