@@ -17,6 +17,7 @@ export CODESEALER_HELM_REPO=tfarinacci/codesealer-helm/main/
 
 export INGRESS_NAMESPACE=ingress-nginx
 export INGRESS_DEPLOYMENT=ingress-nginx-controller
+export INGRESS_PORT=443
 
 if [[ "$1" == "install" ]]; then
 
@@ -76,6 +77,8 @@ if [[ "$1" == "install" ]]; then
   helm install codesealer-1 codesealer/codesealer --create-namespace --namespace codesealer-system \
     --set codesealerToken=${CODESEALER_TOKEN} \
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+    --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
+    --set worker.ingress.port=${INGRESS_PORT} \
     --set image.pullPolicy=Always \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
@@ -87,7 +90,7 @@ if [[ "$1" == "install" ]]; then
     # --set redis.namespace=codesealer-system \
     # --set ingress.namespace=codesealer-system \
     # --set ingress.enabled=true \
-    # --set "ingress.tls[0].hosts[0]=core-manager.local,ingress.tls[0].secretName=core-manager-tls" \
+    # --set "ingress.tls[0].hosts[0]=core-manager.local,ingress.tls[0].secretName=ingress-tls" \
     # --set "ingress.hosts[0].host=core-manager.local,ingress.hosts[0].paths[0].path=/,ingress.hosts[0].paths[0].pathType=Prefix"
 
   echo "\n########################################################################################"
@@ -165,6 +168,8 @@ elif [[ "$1" == "upgrade" ]]; then
   helm upgrade codesealer-1 codesealer/codesealer --namespace codesealer-system \
     --set codesealerToken=${CODESEALER_TOKEN} \
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+    --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
+    --set worker.ingress.port=${INGRESS_PORT} \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
     --set worker.config.endpoint.wafFullTransaction=true \
