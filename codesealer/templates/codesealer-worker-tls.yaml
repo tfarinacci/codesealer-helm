@@ -13,5 +13,6 @@ data:
   # Cert for {{ include "worker.service.fullname" . }}
   tls.crt: {{ $tls.clientCert }}
   tls.key: {{ $tls.clientKey }}
+  ca.crt: {{ $tls.caCert }}
 {{- end }}
 ---

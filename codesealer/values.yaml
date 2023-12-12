@@ -192,9 +192,9 @@ worker:
 
   # admission secret with client certs mounted within the admission controller.
   secret:
-    create: "true"
+    create: false
     # name of the secret (auto-generated)
-    name: codesealer-ingress-tls
+    name: codesealer-worker-tls
     type: kubernetes.io/tls
     # PEM format certificate (auto-generated)
     # override via --set-file
