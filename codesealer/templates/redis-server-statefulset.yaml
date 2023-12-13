@@ -37,7 +37,7 @@ spec:
             - name: redis-data
               mountPath: /data
               readOnly: false
-            - name: {{ .Values.worker.secret.name }}
+            - name: {{ .Values.redis.secret.name }}
               mountPath: /certs
               readOnly: true
       volumes:
@@ -47,6 +47,6 @@ spec:
         - name: redis-data
           persistentVolumeClaim:
             claimName: redis-pv-claim
-        - name: {{ .Values.worker.secret.name }}
+        - name: {{ .Values.redis.secret.name }}
           secret:
-            secretName: {{ .Values.worker.secret.name }}
+            secretName: {{ .Values.redis.secret.name }}
