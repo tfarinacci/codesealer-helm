@@ -209,10 +209,6 @@ Create service fully qualified hostname
 Generate Redis certificate authority
 */}}
 {{- define "redis.gen-certs" -}}
-{{- $redisNamespace := .Values.redis.namespace }}
-{{- $clusterDomain := .Values.clusterDomain }}
-{{- $fullname := include "codesealer.fullname" . }}
-{{- $serviceName := include "redis.serviceName" . }}
 {{- $expiration := (.Values.redis.ca.expiration | int) -}}
 {{- if (or (empty .Values.redis.ca.cert) (empty .Values.redis.ca.key)) -}}
 {{- $ca :=  genCA "redis-ca" $expiration -}}
@@ -224,13 +220,7 @@ Generate Redis certificate authority
 Generate Redis client key and cert from CA
 */}}
 {{- define "redis.gen-client-tls" -}}
-{{- $redisNamespace := .RootScope.Values.redis.namespace }}
-{{- $clusterDomain := .RootScope.Values.clusterDomain }}
-{{- $fullname := include "codesealer.fullname" .RootScope }}
-{{- $serviceName := include "redis.serviceName" .RootScope }}
-{{- $headlessServiceName := printf "%s-headless" $fullname }}
-{{- $masterServiceName := printf "%s-master" $fullname }}
-{{- $altNames := list (printf "*.%s.%s.svc.%s" $serviceName $redisNamespace $clusterDomain) (printf "%s.%s.svc.%s" $masterServiceName $redisNamespace $clusterDomain) (printf "*.%s.%s.svc.%s" $masterServiceName $redisNamespace $clusterDomain) (printf "*.%s.%s.svc.%s" $headlessServiceName $redisNamespace $clusterDomain) (printf "%s.%s.svc.%s" $headlessServiceName $redisNamespace $clusterDomain) "127.0.0.1" "localhost" $fullname -}}
+{{- $altNames := list ( include "redis.service.fullname" .RootScope) -}}
 {{- $expiration := (.RootScope.Values.redis.ca.expiration | int) -}}
 {{- $cert := genSignedCert ( include "codesealer.fullname" .RootScope) nil $altNames $expiration .CA -}}
 {{- $clientCert := $cert.Cert | b64enc -}}
