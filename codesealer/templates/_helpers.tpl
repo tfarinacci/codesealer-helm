@@ -220,7 +220,7 @@ Generate Redis certificate authority
 Generate Redis client key and cert from CA
 */}}
 {{- define "redis.gen-client-tls" -}}
-{{- $altNames := list ( include "redis.service.fullname" .RootScope) -}}
+{{- $altNames := list ( include "redis.service.fullname" .RootScope) (printf "*.%s" ( include "redis.service.fullname" .RootScope)) "127.0.0.1" "localhost" -}}
 {{- $expiration := (.RootScope.Values.redis.ca.expiration | int) -}}
 {{- $cert := genSignedCert ( include "codesealer.fullname" .RootScope) nil $altNames $expiration .CA -}}
 {{- $clientCert := $cert.Cert | b64enc -}}
