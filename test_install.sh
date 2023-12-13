@@ -32,15 +32,8 @@ if [[ "$1" == "install" ]]; then
     --set controller.hostPort.enabled=true \
     --set controller.service.type=LoadBalancer \
     --set controller.publishService.enabled=false \
-    --set controller.extraArgs.publish-status-address=localhost
-
-    echo "\n########################################################################################"
-    echo "#  Waiting for NGINX Ingress Controller to start"
-    echo "########################################################################################"
-    kubectl wait --namespace ingress-nginx \
-    --for=condition=ready pod \
-    --selector=app.kubernetes.io/component=controller \
-    --timeout=90s
+    --set controller.extraArgs.publish-status-address=localhost \
+    --wait --timeout=60s
   else
     echo "\n########################################################################################"
     echo "#  Skipping NGINX Ingress Controller installation"
@@ -57,15 +50,8 @@ if [[ "$1" == "install" ]]; then
     --set ingress.enabled=true \
     --set "ingress.hosts[0].host=localhost,ingress.hosts[0].paths[0].path=/" \
     --set "ingress.tls[0].hosts[0]=localhost,ingress.tls[0].secretName=" \
-    --set ingress.pathType=Prefix
-
-  echo "\n########################################################################################"
-  echo "#  Waiting for Juice Shop to start"
-  echo "########################################################################################"
-  kubectl wait --namespace juice-shop \
-  --for=condition=ready pod \
-  --selector=app.kubernetes.io/name=juice-shop \
-  --timeout=90s
+    --set ingress.pathType=Prefix \
+    --wait --timeout=60s
 
   echo "\n########################################################################################"
   echo "#  Install Codesealer"
@@ -83,7 +69,8 @@ if [[ "$1" == "install" ]]; then
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
     --set worker.config.endpoint.wafFullTransaction=true \
-    --set worker.config.endpoint.paranoiaLevel=1     
+    --set worker.config.endpoint.paranoiaLevel=1 \
+    --wait --timeout=90s
 
     # --set worker.config.endpoint.hostScheme=https \
     # --set worker.config.endpoint.hostname=localhost \
@@ -92,14 +79,6 @@ if [[ "$1" == "install" ]]; then
     # --set ingress.enabled=true \
     # --set "ingress.tls[0].hosts[0]=core-manager.local,ingress.tls[0].secretName=ingress-tls" \
     # --set "ingress.hosts[0].host=core-manager.local,ingress.hosts[0].paths[0].path=/,ingress.hosts[0].paths[0].pathType=Prefix"
-
-  echo "\n########################################################################################"
-  echo "#  Waiting for Codesealer to start"
-  echo "########################################################################################"
-  kubectl wait --namespace codesealer-system \
-  --for=condition=ready pod \
-  --selector=app.kubernetes.io/name=codesealer-mutating-webhook \
-  --timeout=90s
 
   echo "\n########################################################################################"
   echo "#  Activate Codesealer by applying labels and annotations"
@@ -114,6 +93,7 @@ if [[ "$1" == "install" ]]; then
 
   echo "\n"
   echo "  $ kubectl patch deployment $INGRESS_DEPLOYMENT -n $INGRESS_NAMESPACE -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'"
+  echo "\n"
   kubectl patch deployment $INGRESS_DEPLOYMENT -n $INGRESS_NAMESPACE -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'
   echo "\n########################################################################################"
   
@@ -124,14 +104,6 @@ if [[ "$1" == "install" ]]; then
   kubectl scale deployment $INGRESS_DEPLOYMENT  --namespace $INGRESS_NAMESPACE --replicas=0
   sleep 20   
   kubectl scale deployment $INGRESS_DEPLOYMENT  --namespace $INGRESS_NAMESPACE --replicas=1
-
-  echo "\n########################################################################################"
-  echo "#  Waitinging for NGINX Ingress Controller to restart"
-  echo "########################################################################################"
-  kubectl wait --namespace ingress-nginx \
-  --for=condition=ready pod \
-  --selector=app.kubernetes.io/component=controller \
-  --timeout=90s
 
 elif [[ "$1" == "uninstall" ]]; then
 
@@ -173,12 +145,13 @@ elif [[ "$1" == "upgrade" ]]; then
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
     --set worker.config.endpoint.wafFullTransaction=true \
-    --set worker.config.endpoint.paranoiaLevel=1
+    --set worker.config.endpoint.paranoiaLevel=1 \
+    --wait --timeout=90s
 
   echo "\n########################################################################################"
   echo "#  Upgrade Codesealer"
   echo "########################################################################################"
-  read -s -t 30 -p '?Press any key to continue.'
+  read -s -t 10 -p '?Press any key to continue.'
   kubectl rollout restart deployments --namespace codesealer-system
 
   echo "\n########################################################################################"
