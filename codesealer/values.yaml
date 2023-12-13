@@ -15,6 +15,8 @@ imageCredentials:
 nameOverride: ""
 fullnameOverride: ""
 
+clusterDomain: cluster.local
+
 probes:
   initialDelaySeconds: 30
   timeoutSeconds: 5
@@ -182,7 +184,7 @@ worker:
   ca:
     # disable if manually creating certs
     # provide cert and key via --set-file
-    create: true
+    create: false
     # # A base64 encoded PEM format certificate
     # cert: ""
     # # A base64 encoded PEM format private key
@@ -192,7 +194,7 @@ worker:
 
   # admission secret with client certs mounted within the admission controller.
   secret:
-    create: true
+    create: false
     # name of the secret (auto-generated)
     name: codesealer-worker-tls
     type: kubernetes.io/tls
@@ -582,6 +584,35 @@ redis:
     name: redis
     port: 6379
     targetPort: 6379
+
+  # admission CA can be used to override the Certs that will be used
+  # to sign the keys used by the admission operator.
+  ca:
+    # disable if manually creating certs
+    # provide cert and key via --set-file
+    create: true
+    # # A base64 encoded PEM format certificate
+    # cert: ""
+    # # A base64 encoded PEM format private key
+    # key: ""
+    # Expiry time of CA in days for generated certs
+    expiration: 365
+
+  # admission secret with client certs mounted within the admission controller.
+  secret:
+    create: true
+    # name of the secret (auto-generated)
+    name: "codesealer-redis-tls"
+    type: kubernetes.io/tls
+    # PEM format certificate (auto-generated)
+    # override via --set-file
+    cert: ""
+    # PEM format certificate (auto-generated)
+    # override via --set-file
+    key: ""
+    # override via --set-file
+    # Annotations to add to admission secret. (Optional)
+    annotations: {}
 
   config:
     # The maximum number of Redis connections to pool. Note that this is per Worker

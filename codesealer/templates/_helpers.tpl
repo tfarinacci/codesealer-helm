@@ -194,6 +194,55 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{/*
 Create the name of the service to use
 */}}
+{{- define "redis.serviceName" -}}
+{{- .Values.redis.name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Create service fully qualified hostname
+*/}}
+{{- define "redis.service.fullname" -}}
+{{- default ( printf "%s.%s.svc.cluster.local" (include "redis.serviceName" .) .Values.redis.namespace ) }}
+{{- end }}
+
+{{/*
+Generate Redis certificate authority
+*/}}
+{{- define "redis.gen-certs" -}}
+{{- $redisNamespace := .Values.redis.namespace }}
+{{- $clusterDomain := .Values.clusterDomain }}
+{{- $fullname := include "codesealer.fullname" . }}
+{{- $serviceName := include "redis.serviceName" . }}
+{{- $expiration := (.Values.redis.ca.expiration | int) -}}
+{{- if (or (empty .Values.redis.ca.cert) (empty .Values.redis.ca.key)) -}}
+{{- $ca :=  genCA "redis-ca" $expiration -}}
+{{- template "redis.gen-client-tls" (dict "RootScope" . "CA" $ca) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Generate Redis client key and cert from CA
+*/}}
+{{- define "redis.gen-client-tls" -}}
+{{- $redisNamespace := .RootScope.Values.redis.namespace }}
+{{- $clusterDomain := .RootScope.Values.clusterDomain }}
+{{- $fullname := include "codesealer.fullname" .RootScope }}
+{{- $serviceName := include "redis.serviceName" .RootScope }}
+{{- $headlessServiceName := printf "%s-headless" $fullname }}
+{{- $masterServiceName := printf "%s-master" $fullname }}
+{{- $altNames := list (printf "*.%s.%s.svc.%s" $serviceName $redisNamespace $clusterDomain) (printf "%s.%s.svc.%s" $masterServiceName $redisNamespace $clusterDomain) (printf "*.%s.%s.svc.%s" $masterServiceName $redisNamespace $clusterDomain) (printf "*.%s.%s.svc.%s" $headlessServiceName $redisNamespace $clusterDomain) (printf "%s.%s.svc.%s" $headlessServiceName $redisNamespace $clusterDomain) "127.0.0.1" "localhost" $fullname -}}
+{{- $expiration := (.RootScope.Values.redis.ca.expiration | int) -}}
+{{- $cert := genSignedCert ( include "codesealer.fullname" .RootScope) nil $altNames $expiration .CA -}}
+{{- $clientCert := $cert.Cert | b64enc -}}
+{{- $clientKey := $cert.Key | b64enc -}}
+caCert: {{ .CA.Cert | b64enc }}
+clientCert: {{ $clientCert }}
+clientKey: {{ $clientKey }}
+{{- end -}}
+
+{{/*
+Create the name of the service to use
+*/}}
 {{- define "ingress.serviceName" -}}
 {{- range $host := .Values.ingress.hosts }}
 {{- $host.host | trunc 63 | trimSuffix "-" }}
@@ -224,45 +273,6 @@ Generate Ingress client key and cert from CA
 {{- define "ingress.gen-client-tls" -}}
 {{- $altNames := list ( include "ingress.service.fullname" .RootScope) -}}
 {{- $expiration := (.RootScope.Values.ingress.ca.expiration | int) -}}
-{{- $cert := genSignedCert ( include "codesealer.fullname" .RootScope) nil $altNames $expiration .CA -}}
-{{- $clientCert := $cert.Cert | b64enc -}}
-{{- $clientKey := $cert.Key | b64enc -}}
-caCert: {{ .CA.Cert | b64enc }}
-clientCert: {{ $clientCert }}
-clientKey: {{ $clientKey }}
-{{- end -}}
-
-{{/*
-Create the name of the service to use
-*/}}
-{{- define "worker.serviceName" -}}
-{{- .Values.redis.name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Create service fully qualified hostname
-*/}}
-{{- define "worker.service.fullname" -}}
-{{- default ( printf "%s.%s.svc.cluster.local" (include "worker.serviceName" .) .Values.redis.namespace ) }}
-{{- end }}
-
-{{/*
-Generate Worker certificate authority
-*/}}
-{{- define "worker.gen-certs" -}}
-{{- $expiration := (.Values.worker.ca.expiration | int) -}}
-{{- if (or (empty .Values.worker.ca.cert) (empty .Values.worker.ca.key)) -}}
-{{- $ca :=  genCA "worker-ca" $expiration -}}
-{{- template "worker.gen-client-tls" (dict "RootScope" . "CA" $ca) -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Generate Worker client key and cert from CA
-*/}}
-{{- define "worker.gen-client-tls" -}}
-{{- $altNames := list ( include "worker.service.fullname" .RootScope) -}}
-{{- $expiration := (.RootScope.Values.worker.ca.expiration | int) -}}
 {{- $cert := genSignedCert ( include "codesealer.fullname" .RootScope) nil $altNames $expiration .CA -}}
 {{- $clientCert := $cert.Cert | b64enc -}}
 {{- $clientKey := $cert.Key | b64enc -}}
