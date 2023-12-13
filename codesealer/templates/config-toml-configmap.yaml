@@ -1,3 +1,44 @@
+{{- if empty .Values.redis.config.redisPassword }}
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    "helm.sh/resource-policy": "keep"
+  labels:
+   {{- include "redis.labels" . | nindent 4 }}
+  name: "redis-secret"
+  namespace: {{ .Values.redis.namespace }}
+type: Opaque
+data:
+  # retrieve the secret data using lookup function and when not exists, return an empty dictionary / map as result
+  {{- $secretObj := (lookup "v1" "Secret" .Release.Namespace "redis-secret") | default dict }}
+  {{- $secretData := (get $secretObj "data") | default dict }}
+  # set $redisSecret to existing secret data or generate a random one when not exists
+  {{- $redisSecret := (get $secretData "redis-secret") | default (randAlphaNum 32 | b64enc) }}
+  redisPassword: {{ $redisSecret | quote }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.redis.name }}
+  labels:
+   {{- include "redis.labels" . | nindent 4 }}
+  namespace: {{ .Values.redis.namespace }}
+data:
+  redis.conf: |+
+    cluster-enabled no
+    appendonly yes
+    protected-mode no
+    bind 0.0.0.0
+    port 0
+    masterauth {{ $redisSecret | quote }}
+    masteruser {{ .Values.redis.config.redisUser }}
+    tls-port {{ .Values.redis.service.port }}
+    tls-auth-clients no
+    tls-cert-file /certs/tls.crt
+    tls-key-file /certs/tls.key
+    tls-ca-cert-file /certs/ca.crt
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -44,7 +85,7 @@ data:
     redisAddress = ["{{ .Values.redis.name }}.{{ .Values.redis.namespace }}.svc.cluster.local:{{ .Values.redis.service.port }}"]
     redisMaster = "{{ .Values.redis.config.redisMaster }}"
     redisUser = "{{ .Values.redis.config.redisUser }}"
-    redisPassword = "{{ .Values.redis.config.redisPassword }}"
+    redisPassword = {{ $redisSecret | quote }}
     redisUseTLS = {{ .Values.redis.config.redisUseTLS }}
     redisMaxConn = {{ .Values.redis.config.redisMaxConn }}
     redisIgnoreTLS = {{ .Values.redis.config.redisIgnoreTLS }}
@@ -126,3 +167,4 @@ data:
     overrideMaxAge = {{ .Values.worker.config.endpoint.cacheRule.overrideMaxAge }}
     ignoreNoStore = {{ .Values.worker.config.endpoint.cacheRule.ignoreNoStore }}
     ignoreNoCache = {{ .Values.worker.config.endpoint.cacheRule.ignoreNoCache }}
+{{- end }}

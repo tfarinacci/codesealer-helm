@@ -66,6 +66,7 @@ if [[ "$1" == "install" ]]; then
     --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
     --set worker.ingress.port=${INGRESS_PORT} \
     --set image.pullPolicy=Always \
+    --set redis.config.redisIgnoreTLS=true \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
     --set worker.config.endpoint.wafFullTransaction=true \
@@ -142,6 +143,7 @@ elif [[ "$1" == "upgrade" ]]; then
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
     --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
     --set worker.ingress.port=${INGRESS_PORT} \
+    --set redis.config.redisIgnoreTLS=true \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
     --set worker.config.endpoint.wafFullTransaction=true \
