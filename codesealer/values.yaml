@@ -619,7 +619,7 @@ redis:
     # instance, so keep this in mind if you are subject to connection limitations.
     redisMaxConn: 100
     # If 'true', TLS certificate errors for Redis will be ignored.
-    redisIgnoreTLS: false
+    redisIgnoreTLS: true
     # Redis connect timeout specified in milliseconds. Defaults to 50 if not set.
     redisConnectTimeout: 50
     # Redis read timeout specified in milliseconds. Defaults to 250 if not set.
