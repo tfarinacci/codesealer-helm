@@ -320,7 +320,7 @@ worker:
       # request itself will not be altered - in particular, by default the `Hostname` header
       # will not be modified.
       # remoteOut = "https://127.0.0.1:port"
-      outHostScheme: https
+      outScheme: https
       outHostname: 127.0.0.1
       # This list of scripts will select which scripts are protected. Only scripts that occur
       # in HTML '<script>' tags will be protected this way. The entries need to match the
