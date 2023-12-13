@@ -42,6 +42,10 @@ data:
 
     [bootloader]
     redisAddress = ["{{ .Values.redis.name }}.{{ .Values.redis.namespace }}.svc.cluster.local:{{ .Values.redis.service.port }}"]
+    redisMaster = "{{ .Values.redis.config.redisMaster }}"
+    redisUser = "{{ .Values.redis.config.redisUser }}"
+    redisPassword = "{{ .Values.redis.config.redisPassword }}"
+    redisUseTLS = {{ .Values.redis.config.redisUseTLS }}
     redisMaxConn = {{ .Values.redis.config.redisMaxConn }}
     redisIgnoreTLS = {{ .Values.redis.config.redisIgnoreTLS }}
     redisConnectTimeout = {{ .Values.redis.config.redisConnectTimeout }}
