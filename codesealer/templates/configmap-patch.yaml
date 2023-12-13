@@ -27,7 +27,7 @@ data:
             - /bin/sh
           args:
             - -c
-            - iptables -t nat -A PREROUTING -p tcp -i eth0 --dport {{ .Values.worker.config.endpoint.port }} -j REDIRECT --to-port {{ .Values.worker.config.network.listen }} && iptables -t nat --list && echo IPtables Pre-Route Completed Succesfully!
+            - iptables -t nat -A PREROUTING -p tcp -i eth0 --dport {{ .Values.worker.ingress.port }} -j REDIRECT --to-port {{ .Values.worker.config.network.listen }} && iptables -t nat --list && echo IPtables Pre-Route Completed Succesfully!
       containers:
         - name: {{ .Values.worker.name }}
           image: "{{ .Values.image.repository }}/{{ .Values.worker.image }}:{{ .Values.worker.tag | default .Chart.AppVersion }}"

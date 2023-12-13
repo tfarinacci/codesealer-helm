@@ -7,6 +7,25 @@ metadata:
   namespace: {{ .Values.worker.ingress.namespace }}
 data:
   config.toml: |
+    [manager]
+    listen = "0.0.0.0:{{ .Values.manager.config.listen }}"
+    tls = {{ .Values.manager.config.tls }}
+    certFile = "{{ .Values.manager.config.certFile }}"
+    keyFile = "{{ .Values.manager.config.keyFile }}"
+    letsEncrypt = {{ .Values.manager.config.letsEncrypt }}
+    letsEncryptDomain = "{{ .Values.manager.config.letsEncryptDomain }}"
+
+    [[manager.backend]]
+    backendID = "{{ .Values.manager.config.backend.backendID }}"
+    redisAddress = "redis://{{ .Values.redis.name }}"
+    redisIgnoreTLS = {{ .Values.redis.config.redisIgnoreTLS }}
+    redisConnectTimeout = {{ .Values.redis.config.redisConnectTimeout }}
+    redisReadTimeout = {{ .Values.redis.config.redisReadTimeout }}
+    redisWriteTimeout = {{ .Values.redis.config.redisWriteTimeout }}
+    influxAddress = "{{ .Values.influxDB.influxAddress }}"
+    influxToken = "{{ .Values.influxDB.influxToken }}"
+    influxIgnoreTLS = {{ .Values.influxDB.influxIgnoreTLS }}
+
     [network]
     listen = "0.0.0.0:{{ .Values.worker.config.network.listen }}"
     tls = {{ .Values.worker.config.network.tls }}
@@ -22,7 +41,7 @@ data:
     useProxyProtocol = {{ .Values.worker.config.network.useProxyProtocol }}
 
     [bootloader]
-    redisAddress = "rediss://{{ .Values.redis.name }}.{{ .Values.redis.namespace }}.svc.cluster.local"
+    redisAddress = ["{{ .Values.redis.name }}.{{ .Values.redis.namespace }}.svc.cluster.local:{{ .Values.redis.service.port }}"]
     redisMaxConn = {{ .Values.redis.config.redisMaxConn }}
     redisIgnoreTLS = {{ .Values.redis.config.redisIgnoreTLS }}
     redisConnectTimeout = {{ .Values.redis.config.redisConnectTimeout }}
@@ -32,7 +51,6 @@ data:
     influxToken = "{{ .Values.influxDB.influxToken }}"
     influxIgnoreTLS = {{ .Values.influxDB.influxIgnoreTLS }}
     modSecurityConf = "{{ .Values.worker.config.bootloader.modSecurityConf }}"
-    bootPrefix = "{{ .Values.worker.config.bootloader.bootPrefix }}"
     fsEndpoints = {{ .Values.worker.config.bootloader.fsEndpoints }}
     sessionBackend = "{{ .Values.worker.config.bootloader.sessionBackend }}"
 
@@ -43,8 +61,8 @@ data:
 
     [[endpoint]]
     disable = {{ .Values.worker.config.endpoint.disable }}
-    remoteIn = "{{ .Values.worker.config.endpoint.hostScheme }}://{{ .Values.worker.config.endpoint.hostname }}"
-    remoteOut = "https://127.0.0.1:{{ .Values.worker.config.endpoint.port }}"
+    remoteIn = "{{ .Values.worker.config.endpoint.inScheme }}://{{ .Values.worker.config.endpoint.inHostname }}:{{ .Values.worker.ingress.port }}"
+    remoteOut = "{{ .Values.worker.config.endpoint.outScheme }}://{{ .Values.worker.config.endpoint.outHostname }}:{{ .Values.worker.ingress.port }}"
     scriptOptIn = {{ .Values.worker.config.endpoint.scriptOptIn }}
     scriptOptOut = {{ .Values.worker.config.endpoint.scriptOptOut }}
     ignoreRemoteTLS = {{ .Values.worker.config.endpoint.ignoreRemoteTLS }}

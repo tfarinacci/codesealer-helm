@@ -244,6 +244,8 @@ worker:
       remoteTimeout: 5
       # If true, the Worker will assume that the last entry in the last `X-Forwarded-For`
       # header is the actual client IP for use in logs and IP allow-lists for endpoints.
+      # Additionally the last field in X-Forwarded-Proto will be used to determine whether to
+      # set "Secure" on outgoing cookies.
       # Incompatible with 'network.useProxyProtocol'.
       behindProxy: false
       # When true, PROXY protocol will be enabled on the listening socket. Both version 1
@@ -266,8 +268,7 @@ worker:
       bootPrefix: "/~bl/"
       # This option can be set to 'true' in order to run the Worker in "standalone" mode. Each
       # endpoint can then be configured in this file (see the 'endpoint' section below), instead
-      # of configuring them through the Management Portal. In this mode, no coordination is
-      # done through Redis. This option is *not* recommended for production deployments.
+      # of configuring them through the Management Portal.
       fsEndpoints: true
       # Can be set to "redis" or "local". For "redis", state is shared amongst
       # workers through the configured Redis instance. With "local", state is stored
@@ -306,10 +307,11 @@ worker:
       # only process and protect requests that match the URL defined in this option - any
       # other requests will result in a `404 Not Found` response. Allowed values are URLs of
       # the form '<scheme>://<hostname or IP>[:port]' The scheme must be either `http` or
-      # `https`. The port is optional. Wildcards are allowed in the hostname.
-      # remoteIn = "hostScheme://hostname"
-      hostScheme: https
-      hostname: localhost
+      # `https`. The port is optional. A single leading `*` wildcard is allowed in the
+      # hostname.      
+      # remoteIn = "hostScheme://hostname:port"
+      inScheme: https
+      inHostname: localhost
       # This is the address where Codesealer will proxy requests to. Allowed values are URLs
       # of the form '<scheme>://<hostname or IP>[:port]' The scheme must be either `http` or
       # `https`. The port is optional.
@@ -318,7 +320,8 @@ worker:
       # request itself will not be altered - in particular, by default the `Hostname` header
       # will not be modified.
       # remoteOut = "https://127.0.0.1:port"
-      port: 443
+      outHostScheme: https
+      outHostname: 127.0.0.1
       # This list of scripts will select which scripts are protected. Only scripts that occur
       # in HTML '<script>' tags will be protected this way. The entries need to match the
       # 'src' attribute in corresponding '<script>' tags exactly. When 'endpoint.scriptOptOut'
@@ -615,18 +618,25 @@ redis:
     annotations: {}
 
   config:
+    # If Redis Sentinel is used, this sets the master name
+    redisMaster: ""
+    # Username for redis
+    redisUser: ""
+    # Password for redis
+    redisPassword: ""
+    # Whether to use TLS for redis connections
+    redisUseTLS: true
     # The maximum number of Redis connections to pool. Note that this is per Worker
     # instance, so keep this in mind if you are subject to connection limitations.
     redisMaxConn: 100
     # If 'true', TLS certificate errors for Redis will be ignored.
-    redisIgnoreTLS: true
+    redisIgnoreTLS: false
     # Redis connect timeout specified in milliseconds. Defaults to 50 if not set.
     redisConnectTimeout: 50
     # Redis read timeout specified in milliseconds. Defaults to 250 if not set.
     redisReadTimeout: 250
     # Redis write timeout specified in milliseconds. Defaults to 250 if not set.
     redisWriteTimeout: 250
-
 
   annotations: {}
 
@@ -678,6 +688,127 @@ serviceAccount:
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
+
+manager:
+  name: core-manager
+  replicaCount: 1
+  restartPolicy: Always
+  image: core-manager
+  tag: master
+
+  service:
+    type: ClusterIP
+    name: https
+    port: 8444
+
+  ################################################
+  #               Manager settings               #
+  ################################################
+  # The 'manager' section defines some basic settings of the Mangement Portal.
+  config:
+    # The IP and port to listen for requests on.
+    listen: 7443
+    # If true, TLS will be enabled.
+    tls: true
+    # Paths for TLS certificate and key files, if 'manager.tls' is set to true.
+    certFile: "./tls.crt"
+    keyFile: "./tls.key"
+    # Configuration of Let's Encrypt certificates.
+    letsEncrypt: false
+    letsEncryptDomain: ""
+  
+    ################################################
+    #           Manager backend settings           #
+    ################################################
+    # The 'manager.backend' section defines how to connect to Redis and InfluxDB.
+    # Multiple backends can be defines in order for one Management Portal to connect to
+    # several sets for workers.
+    backend:
+    # The name of the backend.
+      backendID: "default"
+
+  annotations: {}
+
+  labels:
+    app: core-manager
+    codesealer.service: core-manager
+
+  selectorLabels:
+    app: core-manager
+    service: core-manager
+
+  podAnnotations: {}
+
+  podLabels: {}
+
+  env:
+    DEBUG_LEVEL: "DEBUG"
+    LOG_LEVEL: "INFO"
+
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  # autoscaling:
+  #   enabled: false
+  #   minReplicas: 1
+  #   maxReplicas: 100
+  #   targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+  # Additional volumes on the output Deployment definition.
+  # volumes:
+  #   - name: config-toml
+  #     configMap:
+  #       name: config-toml
+  #   - name: core-manager-data
+  #     persistentVolumeClaim:
+  #       claimName: core-manager-pv-claim
+  #   - name: codesealer-worker-tls
+  #     secret:
+  #       secretName: codesealer-worker-tls
+
+  # Additional volumeMounts on the output Deployment definition.
+  # volumeMounts:
+  #   - mountPath: /etc/codesealer-core/config.toml
+  #     subPath: config.toml
+  #     name: config-toml
+  #   - name: core-manager-data
+  #     mountPath: /var/lib/core-manager
+  #     readOnly: false
+  #   - mountPath: /etc/core-manager
+  #     name: codesealer-worker-tls
+  #     readOnly: true
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+service:
+  type: ClusterIP
+  port: 8444
+  name: core-manager
 
 # Ingress Parameters for Core-Manager
 ingress:
