@@ -15,6 +15,9 @@ clear
 export CODESEALER_HELM_REPO=tfarinacci/codesealer-helm/main/
 # CODESEALER_HELM_REPO=helm.github.codesealer.com
 
+# Name of release
+export RELEASE_VER="1"
+
 export INGRESS_NAMESPACE=ingress-nginx
 export INGRESS_DEPLOYMENT=ingress-nginx-controller
 export INGRESS_PORT=443
@@ -28,7 +31,7 @@ if [[ "$1" == "install" ]]; then
   echo "########################################################################################"
   read -p 'Install NGINX Ingress Controller [y/n]: '
   if [ $REPLY == 'y' ]; then
-    helm upgrade --install ingress-nginx-release ingress-nginx \
+    helm upgrade --install ingress-nginx-${RELEASE_VER} ingress-nginx \
     --repo https://kubernetes.github.io/ingress-nginx \
     --namespace $INGRESS_NAMESPACE --create-namespace \
     --set controller.hostPort.enabled=true \
@@ -48,7 +51,7 @@ if [[ "$1" == "install" ]]; then
   read -s -t 10 -p '?Press any key to continue.'
 
   helm repo add securecodebox https://charts.securecodebox.io/
-  helm install juice-shop-release securecodebox/juice-shop --namespace juice-shop --create-namespace \
+  helm install juice-shop-${RELEASE_VER} securecodebox/juice-shop --namespace juice-shop --create-namespace \
     --set ingress.enabled=true \
     --set "ingress.hosts[0].host=localhost,ingress.hosts[0].paths[0].path=/" \
     --set "ingress.tls[0].hosts[0]=localhost,ingress.tls[0].secretName=" \
@@ -63,7 +66,7 @@ if [[ "$1" == "install" ]]; then
   echo "########################################################################################"
   read -p 'Install Redis in single master mode [y/n]: '
   if [ $REPLY == 'y' ]; then
-    helm install redis-release oci://registry-1.docker.io/bitnamicharts/redis \
+    helm install redis-${RELEASE_VER} oci://registry-1.docker.io/bitnamicharts/redis \
     --namespace ${REDIS_NAMESPACE} --create-namespace \
     --set auth.enabled=true \
     --set replica.replicaCount=1 \
@@ -85,10 +88,10 @@ if [[ "$1" == "install" ]]; then
   helm repo add codesealer https://raw.githubusercontent.com/${CODESEALER_HELM_REPO}
 
   # Get the Redis password
-  export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis -o jsonpath="{.data.redis-password}" | base64 -d)
+  export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis-${RELEASE_VER} -o jsonpath="{.data.redis-password}" | base64 -d)
 
   # Install Codsealer
-  helm install codesealer-release codesealer/codesealer --create-namespace --namespace codesealer-system \
+  helm install codesealer-${RELEASE_VER} codesealer/codesealer --create-namespace --namespace codesealer-system \
     --set codesealerToken=${CODESEALER_TOKEN} \
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
     --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
@@ -96,6 +99,7 @@ if [[ "$1" == "install" ]]; then
     --set image.pullPolicy=Always \
     --set redis.config.redisUser=default \
     --set redis.config.redisPassword=${REDIS_PASSWORD} \
+    --set redis.config.redisUseTLS=false \
     --set redis.config.redisIgnoreTLS=true \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
@@ -141,21 +145,24 @@ elif [[ "$1" == "uninstall" ]]; then
   echo "\n########################################################################################"
   echo "#  Uninstall Codesealer"
   echo "########################################################################################"
-  helm uninstall codesealer-release --namespace codesealer-system
+  helm uninstall codesealer-${RELEASE_VER} --namespace codesealer-system
   helm repo remove codesealer
+  kubectl delete namespace codesealer-system
 
   echo "\n########################################################################################"
   echo "#  Uninstall OWASP Juice Shop Application"
   echo "########################################################################################"
-  helm uninstall juice-shop-release --namespace juice-shop
+  helm uninstall juice-shop-${RELEASE_VER} --namespace juice-shop
   helm repo remove securecodebox
+  kubectl delete namespace juice-shop
 
   echo "\n########################################################################################"
   echo "#  Do you wish to uninstall Redis?"
   echo "########################################################################################"
   read -p 'Uninstall Redis [y/n]: '
   if [ $REPLY == 'y' ]; then
-    helm uninstall redis-release --namespace redis 
+    helm uninstall redis-${RELEASE_VER} --namespace redis 
+    kubectl delete namespace redis
   else
     echo "\n########################################################################################"
     echo "#  Skipping Redis uninstall"
@@ -167,7 +174,8 @@ elif [[ "$1" == "uninstall" ]]; then
   echo "########################################################################################"
   read -p 'Uninstall NGINX Ingress Controller [y/n]: '
   if [ $REPLY == 'y' ]; then
-    helm uninstall ingress-nginx-release --namespace $INGRESS_NAMESPACE
+    helm uninstall ingress-nginx-${RELEASE_VER} --namespace $INGRESS_NAMESPACE
+    kubectl delete namespace $INGRESS_NAMESPACE
   else
     echo "\n########################################################################################"
     echo "#  Skipping NGINX Ingress Controller uninstall"
@@ -183,13 +191,14 @@ elif [[ "$1" == "upgrade" ]]; then
   echo "#  Upgrade Codesealer Release"
   echo "########################################################################################"
   helm repo update codesealer
-  helm upgrade codesealer-release codesealer/codesealer --namespace codesealer-system \
+  helm upgrade codesealer-${RELEASE_VER} codesealer/codesealer --namespace codesealer-system \
     --set codesealerToken=${CODESEALER_TOKEN} \
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
     --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
     --set worker.ingress.port=${INGRESS_PORT} \
     --set redis.config.redisUser=default \
     --set redis.config.redisPassword=${REDIS_PASSWORD} \
+    --set redis.config.redisUseTLS=false \
     --set redis.config.redisIgnoreTLS=true \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
