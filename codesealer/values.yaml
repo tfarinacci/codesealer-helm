@@ -621,7 +621,7 @@ redis:
     # If Redis Sentinel is used, this sets the master name
     redisMaster: ""
     # Username for redis
-    redisUser: "codesealer"
+    redisUser: "default"
     # Password for redis
     redisPassword: ""
     # Whether to use TLS for redis connections
