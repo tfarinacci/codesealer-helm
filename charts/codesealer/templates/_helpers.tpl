@@ -168,14 +168,14 @@ clientKey: {{ $clientKey }}
 Create the name of the Redis service to use
 */}}
 {{- define "worker.serviceName" -}}
-{{- .Values.redis.config.redisMaster | trunc 63 | trimSuffix "-" }}
+{{- .Values.worker.redis.service.name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Create service fully qualified hostname for the Redis service
 */}}
 {{- define "worker.service.fullname" -}}
-{{- default ( printf "%s.%s.svc.cluster.local" (include "worker.serviceName" .) .Values.redis.namespace ) }}
+{{- default ( printf "%s.%s.svc.cluster.local" (include "worker.serviceName" .) .Values.worker.redis.namespace ) }}
 {{- end }}
 
 {{/*

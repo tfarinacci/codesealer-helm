@@ -63,7 +63,10 @@ if [[ "$1" == "install" ]]; then
     --wait --timeout=60s
 
   echo "\n########################################################################################"
-  echo "#  Do you wish to install Redis - required by Codesealer?"
+  echo "#  Do you wish to install Redis?"
+  echo "#  "
+  echo "#   This is required by Codesealer.  Either use this installation helm chart"
+  echo "#   or follow the Codesealer documentation to install your own version"
   echo "#  "
   echo "#   -- Using github.com/bitnami/charts repository"
   echo "#      Documentation: https://github.com/bitnami/charts/blob/main/bitnami/redis/README.md"
@@ -101,11 +104,11 @@ if [[ "$1" == "install" ]]; then
     --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
     --set worker.ingress.port=${INGRESS_PORT} \
     --set image.pullPolicy=Always \
-    --set redis.config.redisMaster=redis-${RELEASE_VER}-headless \
-    --set redis.config.redisUser=default \
-    --set redis.config.redisPassword=${REDIS_PASSWORD} \
-    --set redis.config.redisUseTLS=false \
-    --set redis.config.redisIgnoreTLS=true \
+    --set worker.redis.service.name=redis-${RELEASE_VER}-headless \
+    --set redis.bootloader.redisUser=default \
+    --set redis.bootloader.redisPassword=${REDIS_PASSWORD} \
+    --set redis.bootloader.redisUseTLS=false \
+    --set redis.bootloader.redisIgnoreTLS=true \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
     --set worker.config.endpoint.wafFullTransaction=true \
@@ -114,7 +117,7 @@ if [[ "$1" == "install" ]]; then
 
     # --set worker.config.endpoint.hostScheme=https \
     # --set worker.config.endpoint.hostname=localhost \
-    # --set redis.namespace=codesealer-system \
+    # --set worker.redis.namespace=codesealer-system \
     # --set ingress.namespace=codesealer-system \
     # --set ingress.enabled=true \
     # --set "ingress.tls[0].hosts[0]=core-manager.local,ingress.tls[0].secretName=ingress-tls" \
@@ -201,11 +204,11 @@ elif [[ "$1" == "upgrade" ]]; then
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
     --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
     --set worker.ingress.port=${INGRESS_PORT} \
-    --set redis.config.redisMaster=redis-${RELEASE_VER}-headless \
-    --set redis.config.redisUser=default \
-    --set redis.config.redisPassword=${REDIS_PASSWORD} \
-    --set redis.config.redisUseTLS=false \
-    --set redis.config.redisIgnoreTLS=true \
+    --set worker.redis.service.name=redis-${RELEASE_VER}-headless \
+    --set redis.bootloader.redisUser=default \
+    --set redis.bootloader.redisPassword=${REDIS_PASSWORD} \
+    --set redis.bootloader.redisUseTLS=false \
+    --set redis.bootloader.redisIgnoreTLS=true \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
     --set worker.config.endpoint.wafFullTransaction=true \
