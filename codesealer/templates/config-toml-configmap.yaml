@@ -31,7 +31,7 @@ data:
     protected-mode no
     bind 0.0.0.0
     port 0
-    acl setuser {{ .Values.redis.config.redisUser }} on allcommands allkeys >$redisSecret
+    acl setuser {{ .Values.redis.config.redisUser }} on allcommands allkeys >{{ $redisSecret }}
     tls-port {{ .Values.redis.service.port }}
     tls-auth-clients no
     tls-cert-file /certs/tls.crt
