@@ -578,7 +578,7 @@ redis:
   # The address of the Redis cluster.
   name: redis-server
   namespace: codesealer-system
-  replicaCount: 1
+  replicaCount: 2
   image: redis
   tag: latest
 
@@ -619,7 +619,7 @@ redis:
 
   config:
     # If Redis Sentinel is used, this sets the master name
-    redisMaster: ""
+    redisMaster: "redis-master"
     # Username for redis
     redisUser: "default"
     # Password for redis
@@ -637,8 +637,11 @@ redis:
     redisReadTimeout: 250
     # Redis write timeout specified in milliseconds. Defaults to 250 if not set.
     redisWriteTimeout: 250
-
-  annotations: {}
+    # Sentinel parameters
+    sentinel:
+      enabled: true
+      masterSet: mymaster
+      annotations: {}
 
   labels: {}
 

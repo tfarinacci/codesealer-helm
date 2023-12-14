@@ -33,6 +33,8 @@ data:
     bind 0.0.0.0
     port 0
     requirepass {{ $redisSecret | b64dec }}
+    masterauth {{ $redisSecret | b64dec }}
+    slaveof {{ .Values.redis.config.redisMaster }} {{ .Values.redis.service.port }}
     tls-port {{ .Values.redis.service.port }}
     tls-auth-clients no
     tls-cert-file /certs/tls.crt
