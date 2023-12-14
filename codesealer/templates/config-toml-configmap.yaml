@@ -31,7 +31,7 @@ data:
     protected-mode no
     bind 0.0.0.0
     port 0
-    acl setuser {{ .Values.redis.config.redisUser }} on >{{ $redisSecret }} allcommands allkeys 
+    acl setuser {{ .Values.redis.config.redisUser }} on >{{ $redisSecret | b64dec }} allcommands allkeys 
     tls-port {{ .Values.redis.service.port }}
     tls-auth-clients no
     tls-cert-file /certs/tls.crt
@@ -60,7 +60,7 @@ data:
     redisAddress = ["{{ .Values.redis.name }}.{{ .Values.redis.namespace }}.svc.cluster.local:{{ .Values.redis.service.port }}"]
     redisMaster = {{ .Values.redis.config.redisMaster | quote }}
     redisUser = {{ .Values.redis.config.redisUser | quote }}
-    redisPassword = {{ $redisSecret | quote }}
+    redisPassword = {{ $redisSecret | b64dec | quote }}
     redisUseTLS = {{ .Values.redis.config.redisUseTLS }}
     redisIgnoreTLS = {{ .Values.redis.config.redisIgnoreTLS }}
     redisConnectTimeout = {{ .Values.redis.config.redisConnectTimeout }}
@@ -88,7 +88,7 @@ data:
     redisAddress = ["{{ .Values.redis.name }}.{{ .Values.redis.namespace }}.svc.cluster.local:{{ .Values.redis.service.port }}"]
     redisMaster = {{ .Values.redis.config.redisMaster | quote }}
     redisUser = {{ .Values.redis.config.redisUser | quote }}
-    redisPassword = {{ $redisSecret | quote }}
+    redisPassword = {{ $redisSecret | b64dec | quote }}
     redisUseTLS = {{ .Values.redis.config.redisUseTLS }}
     redisMaxConn = {{ .Values.redis.config.redisMaxConn }}
     redisIgnoreTLS = {{ .Values.redis.config.redisIgnoreTLS }}
