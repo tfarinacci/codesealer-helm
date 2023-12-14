@@ -25,13 +25,14 @@ metadata:
    {{- include "redis.labels" . | nindent 4 }}
   namespace: {{ .Values.redis.namespace }}
 data:
+  #     ACL SETUSER {{ .Values.redis.config.redisUser }} on >{{ $redisSecret | b64dec }} allcommands allkeys
   redis.conf: |+
     cluster-enabled no
     appendonly yes
     protected-mode no
     bind 0.0.0.0
     port 0
-    ACL SETUSER {{ .Values.redis.config.redisUser }} on >{{ $redisSecret | b64dec }} allcommands allkeys
+    requirepass {{ $redisSecret | b64dec }}
     tls-port {{ .Values.redis.service.port }}
     tls-auth-clients no
     tls-cert-file /certs/tls.crt
