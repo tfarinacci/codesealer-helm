@@ -25,7 +25,8 @@ metadata:
    {{- include "redis.labels" . | nindent 4 }}
   namespace: {{ .Values.redis.namespace }}
 data:
-  #     ACL SETUSER {{ .Values.redis.config.redisUser }} on >{{ $redisSecret | b64dec }} allcommands allkeys
+    # ACL SETUSER {{ .Values.redis.config.redisUser }} on >{{ $redisSecret | b64dec }} allcommands allkeys
+    # slaveof {{ .Values.redis.config.redisMaster }} {{ .Values.redis.service.port }}
   redis.conf: |+
     cluster-enabled no
     appendonly yes
@@ -34,7 +35,6 @@ data:
     port 0
     requirepass {{ $redisSecret | b64dec }}
     masterauth {{ $redisSecret | b64dec }}
-    slaveof {{ .Values.redis.config.redisMaster }} {{ .Values.redis.service.port }}
     tls-port {{ .Values.redis.service.port }}
     tls-auth-clients no
     tls-cert-file /certs/tls.crt
