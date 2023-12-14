@@ -3,6 +3,16 @@ entries:
   codesealer:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2023-12-14T13:50:12.356304-05:00"
+    description: A Helm chart for Codesealer
+    digest: e64ae60c3cc35d8ba4bb0ddd285143eeb335aca2ad59d455d043d748f58b9140
+    name: codesealer
+    type: application
+    urls:
+    - codesealer-0.1.3.tgz
+    version: 0.1.3
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2023-12-14T12:08:28.59614-05:00"
     description: A Helm chart for Codesealer
     digest: 3d1f7a79a4f21801e77ced8bb4e0cd0990296954308758fb9ba55b86396ed4b5
@@ -31,4 +41,4 @@ entries:
     urls:
     - codesealer-0.1.0.tgz
     version: 0.1.0
-generated: "2023-12-14T12:08:28.596185-05:00"
+generated: "2023-12-14T13:50:12.35632-05:00"
