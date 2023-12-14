@@ -96,6 +96,8 @@ if [[ "$1" == "install" ]]; then
 
   # Get the Redis password
   export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis-${RELEASE_VER} -o jsonpath="{.data.redis-password}" | base64 -d)
+  echo "Redis password: ${REDIS_PASSWORD}"
+  read -s -t 10 -p '?Press any key to continue.'
 
   # Install Codsealer
   helm install codesealer-${RELEASE_VER} codesealer/codesealer --create-namespace --namespace codesealer-system \
@@ -104,11 +106,11 @@ if [[ "$1" == "install" ]]; then
     --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
     --set worker.ingress.port=${INGRESS_PORT} \
     --set image.pullPolicy=Always \
-    --set worker.redis.service.name=redis-${RELEASE_VER}-headless \
-    --set redis.bootloader.redisUser=default \
-    --set redis.bootloader.redisPassword=${REDIS_PASSWORD} \
-    --set redis.bootloader.redisUseTLS=false \
-    --set redis.bootloader.redisIgnoreTLS=true \
+    --set worker.redis.service.name=redis-${RELEASE_VER}-master \
+    --set worker.config.bootloader.redisUser=default \
+    --set worker.config.bootloader.redisPassword=${REDIS_PASSWORD} \
+    --set worker.config.bootloader.redisUseTLS=false \
+    --set worker.config.bootloader.redisIgnoreTLS=true \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
     --set worker.config.endpoint.wafFullTransaction=true \
@@ -204,11 +206,11 @@ elif [[ "$1" == "upgrade" ]]; then
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
     --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
     --set worker.ingress.port=${INGRESS_PORT} \
-    --set worker.redis.service.name=redis-${RELEASE_VER}-headless \
-    --set redis.bootloader.redisUser=default \
-    --set redis.bootloader.redisPassword=${REDIS_PASSWORD} \
-    --set redis.bootloader.redisUseTLS=false \
-    --set redis.bootloader.redisIgnoreTLS=true \
+    --set worker.redis.service.name=redis-${RELEASE_VER}-master \
+    --set worker.config.bootloader.redisUser=default \
+    --set worker.config.bootloader.redisPassword=${REDIS_PASSWORD} \
+    --set worker.config.bootloader.redisUseTLS=false \
+    --set worker.config.bootloader.redisIgnoreTLS=true \
     --set worker.config.endpoint.wafMonitorMode=false \
     --set worker.config.endpoint.enableWaf=true \
     --set worker.config.endpoint.wafFullTransaction=true \
