@@ -581,8 +581,10 @@ redis:
     port: 6379
 
   config:
+    # Addresses of redis nodes
+    redisAddress: ""
     # If Redis Sentinel is used, this sets the master name
-    redisMaster: "redis-master"
+    redisMaster: ""
     # Username for redis
     redisUser: "default"
     # Password for redis

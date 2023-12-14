@@ -101,6 +101,7 @@ if [[ "$1" == "install" ]]; then
     --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
     --set worker.ingress.port=${INGRESS_PORT} \
     --set image.pullPolicy=Always \
+    --set redis.config.redisMaster=redis-${RELEASE_VER}-headless \
     --set redis.config.redisUser=default \
     --set redis.config.redisPassword=${REDIS_PASSWORD} \
     --set redis.config.redisUseTLS=false \
@@ -200,6 +201,7 @@ elif [[ "$1" == "upgrade" ]]; then
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
     --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
     --set worker.ingress.port=${INGRESS_PORT} \
+    --set redis.config.redisMaster=redis-${RELEASE_VER}-headless \
     --set redis.config.redisUser=default \
     --set redis.config.redisPassword=${REDIS_PASSWORD} \
     --set redis.config.redisUseTLS=false \
