@@ -165,63 +165,36 @@ clientKey: {{ $clientKey }}
 {{- end -}}
 
 {{/*
-Name of the redis service
+Create the name of the Redis service to use
 */}}
-{{- define "redis.name" -}}
-{{- default .Values.redis.name | trunc 63 | trimSuffix "-" }}
+{{- define "worker.serviceName" -}}
+{{- .Values.redis.config.redisMaster | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
-Redis labels
+Create service fully qualified hostname for the Redis service
 */}}
-{{- define "redis.labels" -}}
-helm.sh/chart: {{ include "codesealer.chart" . }}
-{{ include "redis.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- define "worker.service.fullname" -}}
+{{- default ( printf "%s.%s.svc.cluster.local" (include "worker.serviceName" .) .Values.redis.namespace ) }}
 {{- end }}
 
 {{/*
-Redis Selector labels
+Generate worker certificate authority to connect to Redis
 */}}
-{{- define "redis.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "redis.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-{{/*
-Create the name of the service to use
-*/}}
-{{- define "redis.serviceName" -}}
-{{- .Values.redis.name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{/*
-Create service fully qualified hostname
-*/}}
-{{- define "redis.service.fullname" -}}
-{{- default ( printf "%s.%s.svc.cluster.local" (include "redis.serviceName" .) .Values.redis.namespace ) }}
-{{- end }}
-
-{{/*
-Generate Redis certificate authority
-*/}}
-{{- define "redis.gen-certs" -}}
-{{- $expiration := (.Values.redis.ca.expiration | int) -}}
-{{- if (or (empty .Values.redis.ca.cert) (empty .Values.redis.ca.key)) -}}
+{{- define "worker.gen-certs" -}}
+{{- $expiration := (.Values.worker.ca.expiration | int) -}}
+{{- if (or (empty .Values.worker.ca.cert) (empty .Values.worker.ca.key)) -}}
 {{- $ca :=  genCA "redis-ca" $expiration -}}
-{{- template "redis.gen-client-tls" (dict "RootScope" . "CA" $ca) -}}
+{{- template "worker.gen-client-tls" (dict "RootScope" . "CA" $ca) -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Generate Redis client key and cert from CA
+Generate worker client key and cert from CA  to connect to Redis
 */}}
-{{- define "redis.gen-client-tls" -}}
-{{- $altNames := list ( include "redis.service.fullname" .RootScope) (printf "*.%s" ( include "redis.service.fullname" .RootScope)) "127.0.0.1" "localhost" -}}
-{{- $expiration := (.RootScope.Values.redis.ca.expiration | int) -}}
+{{- define "worker.gen-client-tls" -}}
+{{- $altNames := list ( include "worker.service.fullname" .RootScope) (printf "*.%s" ( include "worker.service.fullname" .RootScope)) "127.0.0.1" "localhost" -}}
+{{- $expiration := (.RootScope.Values.worker.ca.expiration | int) -}}
 {{- $cert := genSignedCert ( include "codesealer.fullname" .RootScope) nil $altNames $expiration .CA -}}
 {{- $clientCert := $cert.Cert | b64enc -}}
 {{- $clientKey := $cert.Key | b64enc -}}

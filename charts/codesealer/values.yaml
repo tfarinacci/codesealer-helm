@@ -575,47 +575,10 @@ worker:
   affinity: {}
 
 redis:
-  # The address of the Redis cluster.
-  name: redis-server
-  namespace: codesealer-system
-  replicaCount: 2
-  image: redis
-  tag: latest
+  namespace: redis
 
   service:
-    type: ClusterIP
-    name: redis
     port: 6379
-    targetPort: 6379
-
-  # admission CA can be used to override the Certs that will be used
-  # to sign the keys used by the admission operator.
-  ca:
-    # disable if manually creating certs
-    # provide cert and key via --set-file
-    create: true
-    # # A base64 encoded PEM format certificate
-    # cert: ""
-    # # A base64 encoded PEM format private key
-    # key: ""
-    # Expiry time of CA in days for generated certs
-    expiration: 365
-
-  # admission secret with client certs mounted within the admission controller.
-  secret:
-    create: true
-    # name of the secret (auto-generated)
-    name: "codesealer-redis-tls"
-    type: kubernetes.io/tls
-    # PEM format certificate (auto-generated)
-    # override via --set-file
-    cert: ""
-    # PEM format certificate (auto-generated)
-    # override via --set-file
-    key: ""
-    # override via --set-file
-    # Annotations to add to admission secret. (Optional)
-    annotations: {}
 
   config:
     # If Redis Sentinel is used, this sets the master name
@@ -625,7 +588,7 @@ redis:
     # Password for redis
     redisPassword: ""
     # Whether to use TLS for redis connections
-    redisUseTLS: true
+    redisUseTLS: false
     # The maximum number of Redis connections to pool. Note that this is per Worker
     # instance, so keep this in mind if you are subject to connection limitations.
     redisMaxConn: 100
@@ -637,49 +600,6 @@ redis:
     redisReadTimeout: 250
     # Redis write timeout specified in milliseconds. Defaults to 250 if not set.
     redisWriteTimeout: 250
-    # Sentinel parameters
-    sentinel:
-      enabled: true
-      masterSet: mymaster
-      annotations: {}
-
-  labels: {}
-
-  selectorLabels: {}
-
-  podAnnotations: {}
-
-  podLabels: {}
-
-  resources: {}
-    # We usually recommend not to specify default resources and to leave this as a conscious
-    # choice for the user. This also increases chances charts run on environments with little
-    # resources, such as Minikube. If you do want to specify resources, uncomment the following
-    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-    # limits:
-    #   cpu: 100m
-    #   memory: 128Mi
-    # requests:
-    #   cpu: 100m
-    #   memory: 128Mi
-
-  # autoscaling:
-  #   enabled: false
-  #   minReplicas: 1
-  #   maxReplicas: 100
-  #   targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-
-  podSecurityContext: {}
-    # fsGroup: 2000
-
-  securityContext: {}
-    # capabilities:
-    #   drop:
-    #   - ALL
-    # readOnlyRootFilesystem: true
-    # runAsNonRoot: true
-    # runAsUser: 1000
 
 serviceAccount:
   # Specifies whether a service account should be created
