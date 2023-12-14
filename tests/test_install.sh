@@ -19,7 +19,7 @@ export CODESEALER_HELM_REPO=tfarinacci/codesealer-helm/main/
 export RELEASE_VER="1"
 
 export INGRESS_NAMESPACE=ingress-nginx
-export INGRESS_DEPLOYMENT=ingress-nginx-controller
+export INGRESS_DEPLOYMENT=ingress-nginx-${RELEASE_VER}-controller
 export INGRESS_PORT=443
 
 export REDIS_NAMESPACE=redis
@@ -28,6 +28,8 @@ if [[ "$1" == "install" ]]; then
 
   echo "\n########################################################################################"
   echo "#  Do you wish to install NGINX Ingress Controller to access the OWASP Juice Shop Application?"
+  echo "#  "
+  echo "#  Documentation: https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx"
   echo "########################################################################################"
   read -p 'Install NGINX Ingress Controller [y/n]: '
   if [ $REPLY == 'y' ]; then
@@ -47,6 +49,8 @@ if [[ "$1" == "install" ]]; then
 
   echo "\n########################################################################################"
   echo "#  Install OWASP Juice Shop Application"
+  echo "#  "
+  echo "#  Documentation: https://artifacthub.io/packages/helm/securecodebox/juice-shop"
   echo "########################################################################################"
   read -s -t 10 -p '?Press any key to continue.'
 
@@ -61,8 +65,8 @@ if [[ "$1" == "install" ]]; then
   echo "\n########################################################################################"
   echo "#  Do you wish to install Redis - required by Codesealer?"
   echo "#  "
-  echo "#   -- Using github.com/bitnami/charts repo"
-  echo "#  "
+  echo "#   -- Using github.com/bitnami/charts repository"
+  echo "#      Documentation: https://github.com/bitnami/charts/blob/main/bitnami/redis/README.md"
   echo "########################################################################################"
   read -p 'Install Redis in single master mode [y/n]: '
   if [ $REPLY == 'y' ]; then
@@ -175,7 +179,7 @@ elif [[ "$1" == "uninstall" ]]; then
   read -p 'Uninstall NGINX Ingress Controller [y/n]: '
   if [ $REPLY == 'y' ]; then
     helm uninstall ingress-nginx-${RELEASE_VER} --namespace $INGRESS_NAMESPACE
-    kubectl delete namespace $INGRESS_NAMESPACE
+    # kubectl delete namespace $INGRESS_NAMESPACE
   else
     echo "\n########################################################################################"
     echo "#  Skipping NGINX Ingress Controller uninstall"
