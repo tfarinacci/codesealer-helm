@@ -425,15 +425,15 @@ worker:
         # as the largest file you are willing to accept. The second value refers
         # to the size of data, with files excluded. You want to keep that value as
         # low as practical.
-        SecRequestBodyLimit: 13107200
-        SecRequestBodyNoFilesLimit: 131072
+        SecRequestBodyLimit: "13107200"
+        SecRequestBodyNoFilesLimit: "131072"
         # What to do if the request body size is above our configured limit.
         # Keep in mind that this setting will automatically be set to ProcessPartial
         # when SecRuleEngine is set to DetectionOnly mode in order to minimize
         # disruptions when initially deploying ModSecurity.
         SecRequestBodyLimitAction: Reject
         # Buffer response bodies of up to 512 KB in length.
-        SecResponseBodyLimit: 524288
+        SecResponseBodyLimit: "524288"
         # What happens when we encounter a response body larger than the configured
         # limit? By default, we process what we have and let the rest through.
         # That's somewhat less secure, but does not break any legitimate pages.
