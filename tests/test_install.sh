@@ -100,6 +100,7 @@ if [[ "$1" == "install" ]]; then
   read -s -t 10 -p '?Press any key to continue.'
 
   # Install Codsealer
+  # We can only write to the redis master service
   helm install codesealer-${RELEASE_VER} codesealer/codesealer --create-namespace --namespace codesealer-system \
     --set codesealerToken=${CODESEALER_TOKEN} \
     --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
