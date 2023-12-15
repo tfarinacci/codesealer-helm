@@ -223,8 +223,8 @@ data:
     # The default debug log configuration is to duplicate the error, warning
     # and notice messages from the error log.
     #
-    # SecDebugLog /opt/modsecurity/var/log/debug.log
-    # SecDebugLogLevel {{ .Values.worker.config.endpoint.modsecurity.SecDebugLogLevel }}
+    #SecDebugLog /opt/modsecurity/var/log/debug.log
+    #SecDebugLogLevel {{ .Values.worker.config.endpoint.modsecurity.SecDebugLogLevel }}
 
 
     # -- Audit log configuration -------------------------------------------------
