@@ -419,7 +419,7 @@ worker:
         # hole for attackers to exploit.
         # Do keep in mind that enabling this directive does increases both
         # memory consumption and response latency.
-        SecRequestBodyAccess: "On"
+        SecResponseBodyAccess: "On"
         # Maximum request body size we will accept for buffering. If you support
         # file uploads then the value given on the first line has to be as large
         # as the largest file you are willing to accept. The second value refers
