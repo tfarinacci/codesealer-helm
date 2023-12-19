@@ -27,6 +27,9 @@ fi
 export CODESEALER_HELM_REPO=https://raw.githubusercontent.com/tfarinacci/codesealer-helm/main/
 export CODESEALER_HELM_CHART=codesealer/codesealer
 
+# Set standalone flag
+export CODESEALER_MODE="hybrid"
+
 # Version of release
 export RELEASE_VER="1"
 
@@ -128,23 +131,45 @@ if [[ "$1" == "install" ]]; then
   echo "# Redis password: ${REDIS_PASSWORD}"
   echo "# "
   echo "# Waiting for Codesealer to start"
-  echo "########################################################################################"      
-  helm install codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
-    --set codesealerToken="${CODESEALER_TOKEN}" \
-    --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-    --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
-    --set worker.ingress.port=${INGRESS_PORT} \
-    --set image.pullPolicy=Always \
-    --set worker.redis.service.name=redis-${RELEASE_VER}-master \
-    --set worker.config.bootloader.redisUser=default \
-    --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-    --set worker.config.bootloader.redisUseTLS=false \
-    --set worker.config.bootloader.redisIgnoreTLS=true \
-    --set worker.config.endpoint.wafMonitorMode=false \
-    --set worker.config.endpoint.enableWaf=true \
-    --set worker.config.endpoint.wafFullTransaction=true \
-    --set worker.config.endpoint.crs.paranoiaLevel=1 \
-    --wait --timeout=90s
+  echo "########################################################################################"
+  if [[ ${CODESEALER_MODE} == "hybrid" ]]; then
+    helm install codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
+      --set codesealerToken="${CODESEALER_TOKEN}" \
+      --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+      --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
+      --set worker.ingress.port=${INGRESS_PORT} \
+      --set image.pullPolicy=Always \
+      --set worker.redis.service.name=redis-${RELEASE_VER}-master \
+      --set worker.config.bootloader.redisUser=default \
+      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+      --set worker.config.bootloader.redisUseTLS=false \
+      --set worker.config.bootloader.redisIgnoreTLS=true \
+      --set worker.config.endpoint.wafMonitorMode=false \
+      --set worker.config.endpoint.enableWaf=true \
+      --set worker.config.endpoint.wafFullTransaction=true \
+      --set worker.config.endpoint.crs.paranoiaLevel=1 \
+      --wait --timeout=90s
+  else
+    helm install codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
+      --set codesealerToken="${CODESEALER_TOKEN}" \
+      --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+      --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
+      --set worker.ingress.port=${INGRESS_PORT} \
+      --set image.pullPolicy=Always \
+      --set manager.enabled=true \
+      --set ingress.enabled=true \
+      --set worker.config.bootloader.fsEndpoints=false \
+      --set worker.redis.service.name=redis-${RELEASE_VER}-master \
+      --set worker.config.bootloader.redisUser=default \
+      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+      --set worker.config.bootloader.redisUseTLS=false \
+      --set worker.config.bootloader.redisIgnoreTLS=true \
+      --set worker.config.endpoint.wafMonitorMode=false \
+      --set worker.config.endpoint.enableWaf=true \
+      --set worker.config.endpoint.wafFullTransaction=true \
+      --set worker.config.endpoint.crs.paranoiaLevel=1 \
+      --wait --timeout=90s
+  fi
 
   echo "########################################################################################"
   echo "#  Activate Codesealer by applying labels and annotations:"
@@ -226,21 +251,44 @@ elif [[ "$1" == "upgrade" ]]; then
   echo "#  Upgrade Codesealer Release"
   echo "########################################################################################"
   helm repo update codesealer
-  helm upgrade codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --namespace codesealer-system \
-    --set codesealerToken="${CODESEALER_TOKEN}" \
-    --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-    --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
-    --set worker.ingress.port=${INGRESS_PORT} \
-    --set worker.redis.service.name=redis-${RELEASE_VER}-master \
-    --set worker.config.bootloader.redisUser=default \
-    --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-    --set worker.config.bootloader.redisUseTLS=false \
-    --set worker.config.bootloader.redisIgnoreTLS=true \
-    --set worker.config.endpoint.wafMonitorMode=false \
-    --set worker.config.endpoint.enableWaf=true \
-    --set worker.config.endpoint.wafFullTransaction=true \
-    --set worker.config.endpoint.crs.paranoiaLevel=1 \
-    --wait --timeout=90s
+  if [[ ${CODESEALER_MODE} == "hybrid" ]]; then
+    helm upgrade codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --namespace codesealer-system \
+      --set codesealerToken="${CODESEALER_TOKEN}" \
+      --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+      --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
+      --set worker.ingress.port=${INGRESS_PORT} \
+      --set image.pullPolicy=Always \
+      --set worker.redis.service.name=redis-${RELEASE_VER}-master \
+      --set worker.config.bootloader.redisUser=default \
+      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+      --set worker.config.bootloader.redisUseTLS=false \
+      --set worker.config.bootloader.redisIgnoreTLS=true \
+      --set worker.config.endpoint.wafMonitorMode=false \
+      --set worker.config.endpoint.enableWaf=true \
+      --set worker.config.endpoint.wafFullTransaction=true \
+      --set worker.config.endpoint.crs.paranoiaLevel=1 \
+      --wait --timeout=90s
+  else
+    helm upgrade codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --namespace codesealer-system \
+      --set codesealerToken="${CODESEALER_TOKEN}" \
+      --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+      --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
+      --set worker.ingress.port=${INGRESS_PORT} \
+      --set image.pullPolicy=Always \
+      --set manager.enabled=true \
+      --set ingress.enabled=true \
+      --set worker.config.bootloader.fsEndpoints=false \
+      --set worker.redis.service.name=redis-${RELEASE_VER}-master \
+      --set worker.config.bootloader.redisUser=default \
+      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+      --set worker.config.bootloader.redisUseTLS=false \
+      --set worker.config.bootloader.redisIgnoreTLS=true \
+      --set worker.config.endpoint.wafMonitorMode=false \
+      --set worker.config.endpoint.enableWaf=true \
+      --set worker.config.endpoint.wafFullTransaction=true \
+      --set worker.config.endpoint.crs.paranoiaLevel=1 \
+      --wait --timeout=90s
+  fi
 
   echo "########################################################################################"
   echo "#  Upgrade Codesealer"
