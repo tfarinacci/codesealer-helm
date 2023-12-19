@@ -8,7 +8,7 @@ metadata:
   namespace: {{ .Values.ingress.namespace }}
 spec:
   ports:
-    - name: https-{{ .Values.worker.config.network.listen }}
+    - name: https-{{ .Values.worker.service.port }}
       port: {{ .Values.worker.service.port }}
       targetPort: {{ .Values.worker.config.network.listen }}
   selector:
