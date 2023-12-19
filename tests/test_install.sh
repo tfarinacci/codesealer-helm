@@ -27,9 +27,6 @@ fi
 export CODESEALER_HELM_REPO=https://raw.githubusercontent.com/tfarinacci/codesealer-helm/main/
 export CODESEALER_HELM_CHART=codesealer/codesealer
 
-# Set mode flag - hybrid or standalone
-export CODESEALER_MODE="standalone"
-
 # Installation specific  exports
 export INGRESS_NAMESPACE=ingress-nginx
 export INGRESS_DEPLOYMENT=ingress-nginx-controller
@@ -113,7 +110,7 @@ if [[ "$1" == "install" ]]; then
   fi
 
   echo "########################################################################################"
-  echo "# Install Codesealer in ${CODESEALER_MODE} mode"
+  echo "# Install Codesealer"
   echo "########################################################################################"
   read -r -s -p 'Press any key to continue.'
   # Install Codesealer helm repo
@@ -121,12 +118,13 @@ if [[ "$1" == "install" ]]; then
 
   # Get the Redis password
   export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis -o jsonpath="{.data.redis-password}" | base64 -d)
+  read -r -p 'Which installation mode for Codesealer [hybrid/standalone]: '
   echo "########################################################################################"
   echo "# Redis password: ${REDIS_PASSWORD}"
   echo "# "
-  echo "# Waiting for Codesealer to start"
+  echo "# Waiting for Codesealer to startin ${REPLY} mode"
   echo "########################################################################################"
-  if [[ ${CODESEALER_MODE} == "hybrid" ]]; then
+  if [[ "${REPLY}" == "hybrid" ]]; then
     # Start Codesealer in `hybrid` mode
     helm install codesealer ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
@@ -160,7 +158,7 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"  
     kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
 
-  else
+  elif [[ "${REPLY}" == "standalone" ]]; then
     # Start Codesealer in `standalone` mode
     helm install codesealer ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
@@ -172,6 +170,12 @@ if [[ "$1" == "install" ]]; then
       --set manager.enabled=true \
       --set ingress.enabled=true \
       --wait --timeout=90s
+  else
+    echo "####################################################################################################################"
+    echo "#  Invalid arguement!"
+    echo "#  Must specify: [hybrid | standalone]"
+    echo "####################################################################################################################"
+    exit 1
   fi
 
 elif [[ "$1" == "uninstall" ]]; then
@@ -226,11 +230,12 @@ elif [[ "$1" == "upgrade" ]]; then
   # Get the Redis password
   export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis -o jsonpath="{.data.redis-password}" | base64 -d)
 
+  read -r -p 'Which installation mode for Codesealer [hybrid/standalone]: '
   echo "########################################################################################"
   echo "#  Upgrade Codesealer Release"
   echo "########################################################################################"
   helm repo update codesealer
-  if [[ ${CODESEALER_MODE} == "hybrid" ]]; then
+  if [[ "${REPLY}" == "hybrid" ]]; then
     helm upgrade codesealer ${CODESEALER_HELM_CHART} --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
@@ -259,7 +264,8 @@ elif [[ "$1" == "upgrade" ]]; then
     echo "#  Waiting for NGINX Ingress Controller to restart"
     echo "########################################################################################"  
     kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
-  else
+
+  elif [[ "${REPLY}" == "standalone" ]]; then
     helm upgrade codesealer ${CODESEALER_HELM_CHART} --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
@@ -270,6 +276,12 @@ elif [[ "$1" == "upgrade" ]]; then
       --set manager.enabled=true \
       --set ingress.enabled=true \
       --wait --timeout=90s
+  else
+    echo "####################################################################################################################"
+    echo "#  Invalid arguement!"
+    echo "#  Must specify: [hybrid | standalone]"
+    echo "####################################################################################################################"
+    exit 1
   fi
 
 else

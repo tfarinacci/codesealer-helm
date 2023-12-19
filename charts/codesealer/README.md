@@ -133,12 +133,12 @@ Codesealer has the following default settings which affect Redis and WAF:
   --set worker.config.endpoint.wafFullTransaction=true \
   --set worker.config.endpoint.crs.paranoiaLevel=1 \
 
-> NOTE: If you would like to install Codesealer in `Standard`` mode (with a local Manager) use the following
->       helm install instead which adds the following set parameters:
+> NOTE: If you would like to install Codesealer in `Standard` mode (with a local Manager) use the following
+>       command instead which adds the following set parameters:
 >
->   --set worker.config.bootloader.fsEndpoints=false \
->   --set manager.enabled=true \
->   --set ingress.enabled=true \
+>   --set worker.config.bootloader.fsEndpoints=false
+>   --set manager.enabled=true
+>   --set ingress.enabled=true
 >
 > ```bash
 > helm install codesealer ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
@@ -153,8 +153,6 @@ Codesealer has the following default settings which affect Redis and WAF:
 >   --wait --timeout=90s
 > ```
 >
-> See also the notes on Kind in the ["Kubernetes Implementation
-> Specifics"](#kubernetes-implementation-specifics) section.
 
 ## Upgrading
 
