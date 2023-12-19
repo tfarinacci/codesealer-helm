@@ -30,12 +30,9 @@ export CODESEALER_HELM_CHART=codesealer/codesealer
 # Set mode flag - hybrid or standalone
 export CODESEALER_MODE="standalone"
 
-# Version of release
-export RELEASE_VER="1"
-
 # Installation specific  exports
 export INGRESS_NAMESPACE=ingress-nginx
-export INGRESS_DEPLOYMENT=ingress-nginx-${RELEASE_VER}-controller
+export INGRESS_DEPLOYMENT=ingress-nginx-controller
 export INGRESS_PORT=443
 export REDIS_NAMESPACE=redis
 
@@ -51,14 +48,11 @@ if [[ "$1" == "install" ]]; then
     echo "#  Waiting for NGINX Ingress Controller to start"
     echo "########################################################################################"      
 
-    helm upgrade --install ingress-nginx-${RELEASE_VER} ingress-nginx \
+    helm upgrade --install ingress-nginx ingress-nginx \
     --repo https://kubernetes.github.io/ingress-nginx \
     --namespace ${INGRESS_NAMESPACE} --create-namespace \
-    --set controller.hostPort.enabled=true \
     --set controller.updateStrategy.rollingUpdate.maxUnavailable=1  \
-    --set controller.service.type=LoadBalancer \
-    --set controller.publishService.enabled=false \
-    --set controller.extraArgs.publish-status-address=localhost \
+    --set controller.hostPort.enabled=true \
     --wait --timeout=60s
   else
     echo "########################################################################################"
@@ -80,7 +74,7 @@ if [[ "$1" == "install" ]]; then
     echo "#  Waiting for Juice Shop to start"
     echo "########################################################################################"      
 
-    helm install juice-shop-${RELEASE_VER} securecodebox/juice-shop --namespace juice-shop --create-namespace \
+    helm install juice-shop securecodebox/juice-shop --namespace juice-shop --create-namespace \
       --set ingress.enabled=true \
       --set "ingress.hosts[0].host=localhost,ingress.hosts[0].paths[0].path=/" \
       --set "ingress.tls[0].hosts[0]=localhost,ingress.tls[0].secretName=" \
@@ -107,7 +101,7 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
     echo "#  Waiting for Redis to start"
     echo "########################################################################################"      
-    helm install redis-${RELEASE_VER} oci://registry-1.docker.io/bitnamicharts/redis \
+    helm install redis oci://registry-1.docker.io/bitnamicharts/redis \
     --namespace ${REDIS_NAMESPACE} --create-namespace \
     --set auth.enabled=true \
     --set replica.replicaCount=1 \
@@ -126,7 +120,7 @@ if [[ "$1" == "install" ]]; then
   helm repo add codesealer ${CODESEALER_HELM_REPO}
 
   # Get the Redis password
-  export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis-${RELEASE_VER} -o jsonpath="{.data.redis-password}" | base64 -d)
+  export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis -o jsonpath="{.data.redis-password}" | base64 -d)
   echo "########################################################################################"
   echo "# Redis password: ${REDIS_PASSWORD}"
   echo "# "
@@ -134,21 +128,12 @@ if [[ "$1" == "install" ]]; then
   echo "########################################################################################"
   if [[ ${CODESEALER_MODE} == "hybrid" ]]; then
     # Start Codesealer in `hybrid` mode
-    helm install codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
+    helm install codesealer ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
       --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
       --set worker.ingress.port=${INGRESS_PORT} \
-      --set image.pullPolicy=Always \
-      --set worker.redis.service.name=redis-${RELEASE_VER}-master \
-      --set worker.config.bootloader.redisUser=default \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --set worker.config.bootloader.redisUseTLS=false \
-      --set worker.config.bootloader.redisIgnoreTLS=true \
-      --set worker.config.endpoint.wafMonitorMode=false \
-      --set worker.config.endpoint.enableWaf=true \
-      --set worker.config.endpoint.wafFullTransaction=true \
-      --set worker.config.endpoint.crs.paranoiaLevel=1 \
       --wait --timeout=90s
 
     echo "########################################################################################"
@@ -177,24 +162,15 @@ if [[ "$1" == "install" ]]; then
 
   else
     # Start Codesealer in `standalone` mode
-    helm install codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
+    helm install codesealer ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
       --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
       --set worker.ingress.port=${INGRESS_PORT} \
-      --set image.pullPolicy=Always \
+      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+      --set worker.config.bootloader.fsEndpoints=false \
       --set manager.enabled=true \
       --set ingress.enabled=true \
-      --set worker.config.bootloader.fsEndpoints=false \
-      --set worker.redis.service.name=redis-${RELEASE_VER}-master \
-      --set worker.config.bootloader.redisUser=default \
-      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --set worker.config.bootloader.redisUseTLS=false \
-      --set worker.config.bootloader.redisIgnoreTLS=true \
-      --set worker.config.endpoint.wafMonitorMode=false \
-      --set worker.config.endpoint.enableWaf=true \
-      --set worker.config.endpoint.wafFullTransaction=true \
-      --set worker.config.endpoint.crs.paranoiaLevel=1 \
       --wait --timeout=90s
   fi
 
@@ -202,7 +178,7 @@ elif [[ "$1" == "uninstall" ]]; then
   echo "########################################################################################"
   echo "#  Uninstall Codesealer"
   echo "########################################################################################"
-  helm uninstall codesealer-${RELEASE_VER} --namespace codesealer-system
+  helm uninstall codesealer --namespace codesealer-system
   helm repo remove codesealer
   kubectl delete namespace codesealer-system
 
@@ -211,7 +187,7 @@ elif [[ "$1" == "uninstall" ]]; then
   echo "########################################################################################"
   read -r -p 'Uninstall OWASP Juice Shop [y/n]: '
   if [[ "${REPLY}" == 'y' ]]; then
-    helm uninstall juice-shop-${RELEASE_VER} --namespace juice-shop
+    helm uninstall juice-shop --namespace juice-shop
     helm repo remove securecodebox
     kubectl delete namespace juice-shop
   else
@@ -225,7 +201,7 @@ elif [[ "$1" == "uninstall" ]]; then
   echo "########################################################################################"
   read -r -p 'Uninstall Redis [y/n]: '
   if [ "${REPLY}" == 'y' ]; then
-    helm uninstall redis-${RELEASE_VER} --namespace redis 
+    helm uninstall redis --namespace redis 
     kubectl delete namespace redis
   else
     echo "########################################################################################"
@@ -238,7 +214,7 @@ elif [[ "$1" == "uninstall" ]]; then
   echo "########################################################################################"
   read -r -p 'Uninstall NGINX Ingress Controller [y/n]: '
   if [ "${REPLY}" == 'y' ]; then
-    helm uninstall ingress-nginx-${RELEASE_VER} --namespace ${INGRESS_NAMESPACE}
+    helm uninstall ingress-nginx --namespace ${INGRESS_NAMESPACE}
     kubectl delete namespace ${INGRESS_NAMESPACE}
   else
     echo "########################################################################################"
@@ -255,21 +231,12 @@ elif [[ "$1" == "upgrade" ]]; then
   echo "########################################################################################"
   helm repo update codesealer
   if [[ ${CODESEALER_MODE} == "hybrid" ]]; then
-    helm upgrade codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --namespace codesealer-system \
+    helm upgrade codesealer ${CODESEALER_HELM_CHART} --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
       --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
       --set worker.ingress.port=${INGRESS_PORT} \
-      --set image.pullPolicy=Always \
-      --set worker.redis.service.name=redis-${RELEASE_VER}-master \
-      --set worker.config.bootloader.redisUser=default \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --set worker.config.bootloader.redisUseTLS=false \
-      --set worker.config.bootloader.redisIgnoreTLS=true \
-      --set worker.config.endpoint.wafMonitorMode=false \
-      --set worker.config.endpoint.enableWaf=true \
-      --set worker.config.endpoint.wafFullTransaction=true \
-      --set worker.config.endpoint.crs.paranoiaLevel=1 \
       --wait --timeout=90s
 
     echo "########################################################################################"
@@ -293,24 +260,15 @@ elif [[ "$1" == "upgrade" ]]; then
     echo "########################################################################################"  
     kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
   else
-    helm upgrade codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --namespace codesealer-system \
+    helm upgrade codesealer ${CODESEALER_HELM_CHART} --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
       --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
       --set worker.ingress.port=${INGRESS_PORT} \
-      --set image.pullPolicy=Always \
+      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+      --set worker.config.bootloader.fsEndpoints=false \
       --set manager.enabled=true \
       --set ingress.enabled=true \
-      --set worker.config.bootloader.fsEndpoints=false \
-      --set worker.redis.service.name=redis-${RELEASE_VER}-master \
-      --set worker.config.bootloader.redisUser=default \
-      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --set worker.config.bootloader.redisUseTLS=false \
-      --set worker.config.bootloader.redisIgnoreTLS=true \
-      --set worker.config.endpoint.wafMonitorMode=false \
-      --set worker.config.endpoint.enableWaf=true \
-      --set worker.config.endpoint.wafFullTransaction=true \
-      --set worker.config.endpoint.crs.paranoiaLevel=1 \
       --wait --timeout=90s
   fi
 
