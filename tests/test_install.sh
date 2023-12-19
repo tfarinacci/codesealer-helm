@@ -27,8 +27,8 @@ fi
 export CODESEALER_HELM_REPO=https://raw.githubusercontent.com/tfarinacci/codesealer-helm/main/
 export CODESEALER_HELM_CHART=codesealer/codesealer
 
-# Set standalone flag
-export CODESEALER_MODE="hybrid"
+# Set mode flag - hybrid or standalone
+export CODESEALER_MODE="standalone"
 
 # Version of release
 export RELEASE_VER="1"
@@ -119,7 +119,7 @@ if [[ "$1" == "install" ]]; then
   fi
 
   echo "########################################################################################"
-  echo "# Install Codesealer"
+  echo "# Install Codesealer in ${CODESEALER_MODE} mode"
   echo "########################################################################################"
   read -r -s -p 'Press any key to continue.'
   # Install Codesealer helm repo
