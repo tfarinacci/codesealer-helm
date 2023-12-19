@@ -133,6 +133,7 @@ if [[ "$1" == "install" ]]; then
   echo "# Waiting for Codesealer to start"
   echo "########################################################################################"
   if [[ ${CODESEALER_MODE} == "hybrid" ]]; then
+    # Start Codesealer in `hybrid` mode
     helm install codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
@@ -149,7 +150,33 @@ if [[ "$1" == "install" ]]; then
       --set worker.config.endpoint.wafFullTransaction=true \
       --set worker.config.endpoint.crs.paranoiaLevel=1 \
       --wait --timeout=90s
+
+    echo "########################################################################################"
+    echo "#  Activate Codesealer by applying labels and annotations:"
+    echo "# "
+    echo "# $ kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled"
+    echo "# "
+    echo "# $ kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'"
+    echo "# "
+    echo "########################################################################################"
+    read -r -s -p 'Press any key to continue.'
+
+    kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled
+    kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'
+    
+    echo "########################################################################################"
+    echo "#  Restart NGINX Ingress Controller"
+    echo "########################################################################################"
+    read -r -s -p 'Press any key to continue.'
+
+    kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
+    echo "########################################################################################"
+    echo "#  Waiting for NGINX Ingress Controller to restart"
+    echo "########################################################################################"  
+    kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
+
   else
+    # Start Codesealer in `standalone` mode
     helm install codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
@@ -170,30 +197,6 @@ if [[ "$1" == "install" ]]; then
       --set worker.config.endpoint.crs.paranoiaLevel=1 \
       --wait --timeout=90s
   fi
-
-  echo "########################################################################################"
-  echo "#  Activate Codesealer by applying labels and annotations:"
-  echo "# "
-  echo "# $ kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled"
-  echo "# "
-  echo "# $ kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'"
-  echo "# "
-  echo "########################################################################################"
-  read -r -s -p 'Press any key to continue.'
-
-  kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled
-  kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'
-  
-  echo "########################################################################################"
-  echo "#  Restart NGINX Ingress Controller"
-  echo "########################################################################################"
-  read -r -s -p 'Press any key to continue.'
-
-  kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
-  echo "########################################################################################"
-  echo "#  Waiting for NGINX Ingress Controller to restart"
-  echo "########################################################################################"  
-  kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
 
 elif [[ "$1" == "uninstall" ]]; then
   echo "########################################################################################"
@@ -268,6 +271,27 @@ elif [[ "$1" == "upgrade" ]]; then
       --set worker.config.endpoint.wafFullTransaction=true \
       --set worker.config.endpoint.crs.paranoiaLevel=1 \
       --wait --timeout=90s
+
+    echo "########################################################################################"
+    echo "#  Upgrade Codesealer"
+    echo "########################################################################################"
+    read -r -s -p 'Press any key to continue.'
+    kubectl rollout restart deployments --namespace codesealer-system
+    echo "########################################################################################"
+    echo "#  Waiting for Codesealer to restart"
+    echo "########################################################################################"  
+    kubectl rollout status deployments --namespace codesealer-system --watch
+
+    echo "########################################################################################"
+    echo "#  Upgrade Codesealer Worker Sidecar for NGINX Ingress Controller"
+    echo "########################################################################################"
+    read -r -s -p 'Press any key to continue.'
+
+    kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
+    echo "########################################################################################"
+    echo "#  Waiting for NGINX Ingress Controller to restart"
+    echo "########################################################################################"  
+    kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
   else
     helm upgrade codesealer-${RELEASE_VER} ${CODESEALER_HELM_CHART} --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
@@ -290,26 +314,6 @@ elif [[ "$1" == "upgrade" ]]; then
       --wait --timeout=90s
   fi
 
-  echo "########################################################################################"
-  echo "#  Upgrade Codesealer"
-  echo "########################################################################################"
-  read -r -s -p 'Press any key to continue.'
-  kubectl rollout restart deployments --namespace codesealer-system
-  echo "########################################################################################"
-  echo "#  Waiting for Codesealer to restart"
-  echo "########################################################################################"  
-  kubectl rollout status deployments --namespace codesealer-system --watch
-
-  echo "########################################################################################"
-  echo "#  Upgrade Codesealer Worker Sidecar for NGINX Ingress Controller"
-  echo "########################################################################################"
-  read -r -s -p 'Press any key to continue.'
-
-  kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
-  echo "########################################################################################"
-  echo "#  Waiting for NGINX Ingress Controller to restart"
-  echo "########################################################################################"  
-  kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
 else
   echo "##+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+#+"
   echo "##"
