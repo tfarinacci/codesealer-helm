@@ -813,6 +813,7 @@ serviceAccount:
   name: ""
 
 manager:
+  enabled: false
   name: core-manager
   replicaCount: 1
   restartPolicy: Always
