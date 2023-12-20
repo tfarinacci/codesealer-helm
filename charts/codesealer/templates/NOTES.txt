@@ -2,7 +2,7 @@
 The first time core-manager is started, it will create a Maintenance Administrator. 
 To see the credentials for this account, check the core-manager log: 
 
-  $ Kubectl get pods -n codesealer-system
+  $ kubectl get pods -n codesealer-system
   $ kubectl logs <core-manager-pod> -n codesealer-system | grep password
 
 The manager can be accessed at https://localhost
