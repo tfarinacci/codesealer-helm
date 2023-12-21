@@ -29,7 +29,8 @@ export CODESEALER_HELM_CHART=codesealer/codesealer
 
 # Installation specific  exports
 export INGRESS_NAMESPACE=ingress-nginx
-export INGRESS_DEPLOYMENT=nginx-stable-nginx-ingress-controller
+export INGRESS_DEPLOYMENT=ingress-nginx-controller
+# export INGRESS_DEPLOYMENT=nginx-stable-nginx-ingress-controller
 export INGRESS_PORT=443
 export REDIS_NAMESPACE=redis
 
@@ -44,17 +45,18 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
     echo "#  Waiting for NGINX Ingress Controller to start"
     echo "########################################################################################" 
-    helm repo add nginx-stable https://helm.nginx.com/stable
-    helm install nginx-stable nginx-stable/nginx-ingress \
-    --namespace ${INGRESS_NAMESPACE} --create-namespace \
-    --wait --timeout=90s
-
-    # helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-    # helm install ingress-nginx ingress-nginx/ingress-nginx \
+    # helm repo add nginx-stable https://helm.nginx.com/stable
+    # helm install nginx-stable nginx-stable/nginx-ingress \
     # --namespace ${INGRESS_NAMESPACE} --create-namespace \
-    # --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
-    # --set controller.hostPort.enabled=true \
     # --wait --timeout=90s
+
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    helm install ingress-nginx ingress-nginx/ingress-nginx \
+    --namespace ${INGRESS_NAMESPACE} --create-namespace \
+    --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
+    --set controller.hostPort.enabled=true \
+    --set controller.service.loadBalancerIP=localhost \
+    --wait --timeout=90s
 
   else
     echo "########################################################################################"
@@ -102,6 +104,8 @@ if [[ "$1" == "install" ]]; then
   # Check if they want the sample application for testing
   if [[ "${REPLY}" == "hybrid" ]]; then
 
+    export CODESEALER_MODE=${REPLY}
+
     echo "########################################################################################"
     echo "#  Install OWASP Juice Shop Application"
     echo "#  "
@@ -131,7 +135,7 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
     echo "# Redis password: ${REDIS_PASSWORD}"
     echo "# "
-    echo "# Waiting for Codesealer to startin ${REPLY} mode"
+    echo "# Waiting for Codesealer to startin ${CODESEALER_MODE} mode"
     echo "########################################################################################"
 
     # Start Codesealer in `hybrid` mode
@@ -230,10 +234,10 @@ elif [[ "$1" == "uninstall" ]]; then
   read -r -p 'Uninstall NGINX Ingress Controller [y/n]: '
   if [ "${REPLY}" == 'y' ]; then
     nginx-stable
-    helm uninstall nginx-stable --namespace ${INGRESS_NAMESPACE}
-    helm repo remove nginx-stable
-    # helm uninstall ingress-nginx --namespace ${INGRESS_NAMESPACE}
-    # helm repo remove ingress-nginx
+    # helm uninstall nginx-stable --namespace ${INGRESS_NAMESPACE}
+    # helm repo remove nginx-stable
+    helm uninstall ingress-nginx --namespace ${INGRESS_NAMESPACE}
+    helm repo remove ingress-nginx
     kubectl delete namespace ${INGRESS_NAMESPACE}
   else
     echo "########################################################################################"
