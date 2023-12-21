@@ -222,7 +222,7 @@ elif [[ "$1" == "uninstall" ]]; then
   echo "########################################################################################"
   read -r -p 'Uninstall NGINX Ingress Controller [y/n]: '
   if [ "${REPLY}" == 'y' ]; then
-    helm uninstall ingress-nginx --namespace ${INGRESS_NAMESPACE}
+    helm uninstall nginx-stable --namespace ${INGRESS_NAMESPACE}
     kubectl delete namespace ${INGRESS_NAMESPACE}
   else
     echo "########################################################################################"
