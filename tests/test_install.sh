@@ -58,32 +58,6 @@ if [[ "$1" == "install" ]]; then
   fi
 
   echo "########################################################################################"
-  echo "#  Install OWASP Juice Shop Application"
-  echo "#  "
-  echo "#  Documentation: https://artifacthub.io/packages/helm/securecodebox/juice-shop"
-  echo "########################################################################################"
-  read -r -p 'Install OWASP Juice Shop [y/n]: '
-
-  if [[ "${REPLY}" == 'y' ]]; then
-    helm repo add securecodebox https://charts.securecodebox.io/
-
-    echo "########################################################################################"
-    echo "#  Waiting for Juice Shop to start"
-    echo "########################################################################################"      
-
-    helm install juice-shop securecodebox/juice-shop --namespace juice-shop --create-namespace \
-      --set ingress.enabled=true \
-      --set "ingress.hosts[0].host=localhost,ingress.hosts[0].paths[0].path=/" \
-      --set "ingress.tls[0].hosts[0]=localhost,ingress.tls[0].secretName=" \
-      --set ingress.pathType=Prefix \
-      --wait --timeout=60s
-  else
-    echo "########################################################################################"
-    echo "#  Skipping Juice Shop installation"
-    echo "########################################################################################"
-  fi
-
-  echo "########################################################################################"
   echo "#  Do you wish to install Redis?"
   echo "#  "
   echo "#   This is required by Codesealer.  Either use this installation helm chart"
@@ -119,18 +93,49 @@ if [[ "$1" == "install" ]]; then
   # Get the Redis password
   export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis -o jsonpath="{.data.redis-password}" | base64 -d)
   read -r -p 'Which installation mode for Codesealer [hybrid/standalone]: '
-  echo "########################################################################################"
-  echo "# Redis password: ${REDIS_PASSWORD}"
-  echo "# "
-  echo "# Waiting for Codesealer to startin ${REPLY} mode"
-  echo "########################################################################################"
+
+  # Check if they want the sample application for testing
   if [[ "${REPLY}" == "hybrid" ]]; then
+
+    echo "########################################################################################"
+    echo "#  Install OWASP Juice Shop Application"
+    echo "#  "
+    echo "#  Documentation: https://artifacthub.io/packages/helm/securecodebox/juice-shop"
+    echo "########################################################################################"
+    read -r -p 'Install OWASP Juice Shop [y/n]: '
+
+    if [[ "${REPLY}" == 'y' ]]; then
+      helm repo add securecodebox https://charts.securecodebox.io/
+
+      echo "########################################################################################"
+      echo "#  Waiting for Juice Shop to start"
+      echo "########################################################################################"      
+
+      helm install juice-shop securecodebox/juice-shop --namespace juice-shop --create-namespace \
+        --set ingress.enabled=true \
+        --set "ingress.hosts[0].host=localhost,ingress.hosts[0].paths[0].path=/" \
+        --set "ingress.tls[0].hosts[0]=localhost,ingress.tls[0].secretName=" \
+        --set ingress.pathType=Prefix \
+        --wait --timeout=60s
+    else
+      echo "########################################################################################"
+      echo "#  Skipping Juice Shop installation"
+      echo "########################################################################################"
+    fi
+
+    echo "########################################################################################"
+    echo "# Redis password: ${REDIS_PASSWORD}"
+    echo "# "
+    echo "# Waiting for Codesealer to startin ${REPLY} mode"
+    echo "########################################################################################"
+
     # Start Codesealer in `hybrid` mode
     helm install codesealer ${CODESEALER_HELM_CHART} --create-namespace --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
       --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
       --set worker.ingress.port=${INGRESS_PORT} \
+      --set worker.redis.namespace=${REDIS_NAMESPACE} \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
       --wait --timeout=90s
 
@@ -165,6 +170,7 @@ if [[ "$1" == "install" ]]; then
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
       --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
       --set worker.ingress.port=${INGRESS_PORT} \
+      --set worker.redis.namespace=${REDIS_NAMESPACE} \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
       --set worker.config.bootloader.fsEndpoints=false \
       --set manager.enabled=true \
