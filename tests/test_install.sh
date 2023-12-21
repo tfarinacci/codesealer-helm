@@ -55,7 +55,7 @@ if [[ "$1" == "install" ]]; then
     --namespace ${INGRESS_NAMESPACE} --create-namespace \
     --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
     --set controller.hostPort.enabled=true \
-    --set controller.service.loadBalancerIP=localhost \
+    --set controller.service.loadBalancerIP=127.0.0.1 \
     --wait --timeout=90s
 
   else
