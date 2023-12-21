@@ -29,7 +29,7 @@ export CODESEALER_HELM_CHART=codesealer/codesealer
 
 # Installation specific  exports
 export INGRESS_NAMESPACE=ingress-nginx
-export INGRESS_DEPLOYMENT=ingress-nginx-controller
+export INGRESS_DEPLOYMENT=ingress-nginx-nginx-ingress-controller
 export INGRESS_PORT=443
 export REDIS_NAMESPACE=redis
 
@@ -45,11 +45,16 @@ if [[ "$1" == "install" ]]; then
     echo "#  Waiting for NGINX Ingress Controller to start"
     echo "########################################################################################"      
 
-    helm upgrade --install ingress-nginx ingress-nginx \
-    --repo https://kubernetes.github.io/ingress-nginx \
+    helm repo add nginx-stable https://helm.nginx.com/stable
+    helm install ingress-nginx nginx-stable/nginx-ingress \
     --namespace ${INGRESS_NAMESPACE} --create-namespace \
-    --set controller.hostPort.enabled=true \
     --wait --timeout=60s
+
+    # helm upgrade --install ingress-nginx ingress-nginx \
+    # --repo https://kubernetes.github.io/ingress-nginx \
+    # --namespace ${INGRESS_NAMESPACE} --create-namespace \
+    # --set controller.hostPort.enabled=true \
+    # --wait --timeout=60s
   else
     echo "########################################################################################"
     echo "#  Skipping NGINX Ingress Controller installation"
