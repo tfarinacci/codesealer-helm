@@ -225,7 +225,7 @@ run Kubernetes on your local computer.
 The Docker Desktop [Quick Start](https://www.docker.com/blog/getting-started-with-docker-desktop/) page
 shows you what you need to do to get up and running with Docker Desktop.
 
-[`Kubernetes`]` (https://docs.docker.com/desktop/kubernetes/) must be enabled.
+[`Kubernetes`](https://docs.docker.com/desktop/kubernetes/) must be enabled.
 
 <a class="btn btn-primary" href="https://www.docker.com/blog/getting-started-with-docker-desktop/" role="button" aria-label="View kind Quick Start Guide">View kind Quick Start Guide</a>
 
