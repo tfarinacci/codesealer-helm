@@ -516,10 +516,14 @@ worker:
         rules901:
           enabled: true
           tags: []
+        # EXCLUSION-RULES
+        rules903:
+          enabled: true
+          tags: []
         # COMMON-EXCEPTIONS
         rules905:
           enabled: true
-          tags: []
+          tags: ["attack-generic", "language-multi"]
         # IP-REPUTATION
         rules910:
           enabled: true
@@ -527,7 +531,7 @@ worker:
         # METHOD-ENFORCEMENT
         rules911:
           enabled: true
-          tags: []
+          tags: ["attack-generic", "language-multi"]
         # DOS-PROTECTION
         rules912:
           enabled: true
@@ -535,43 +539,51 @@ worker:
         # SCANNER-DETECTION.
         rules913:
           enabled: true
-          tags: []
+          tags: ["attack-reputation-scanner", "language-multi"]
         # PROTOCOL-ENFORCEMENT
         rules920:
           enabled: true
-          tags: []
+          tags: ["platform-iis", "platform-windows", "attack-protocol", "language-aspnet", "language-multi"]
         # PROTOCOL-ATTACK
         rules921:
           enabled: true
-          tags: []
+          tags: ["platform-apache", "attack-protocol", "language-ldap", "language-multi"]
         # APPLICATION-ATTACK-LFI
         rules930:
           enabled: true
-          tags: []
+          tags: ["language-multi"]
         # APPLICATION-ATTACK-RFI
         rules931:
           enabled: true
-          tags: []
+          tags: ["attack-rfi", "language-multi"]
         # APPLICATION-ATTACK-RCE
         rules932:
           enabled: true
-          tags: []
+          tags: ["platform-unix", "platform-windows", "attack-rce", "language-multi", "language-powershell", "language-shell"]
         # APPLICATION-ATTACK-PHP
         rules933:
           enabled: true
-          tags: []
+          tags: ["attack-injection-php", "language-php"]
+        # APPLICATION-ATTACK-NODEJS
+        rules934:
+          enabled: true
+          tags: ["attack-generic", "attack-injection-generic", "attack-ssrf", "attack-rce", "language-javascript", "language-multi", "language-perl", "language-php", "language-ruby"]
         # APPLICATION-ATTACK-XSS
         rules941:
           enabled: true
-          tags: []
+          tags: ["platform-ie", "platform-tomcat", "attack-xss", "language-multi"]
         # APPLICATION-ATTACK-SQLI
         rules942:
           enabled: true
-          tags: ["SQL"]
+          tags: ["platform-sql", "attack-sqli", "language-multi"]
         # APPLICATION-ATTACK-SESSION-FIXATION
         rules943:
           enabled: true
-          tags: []
+          tags: ["attack-fixation", "language-multi"]
+        # APPLICATION-ATTACK-JAVA
+        rules944:
+          enabled: true
+          tags: ["attack-injection-java", "attack-rce", "language-java"]
         # BLOCKING-EVALUATION
         rules949:
           enabled: true
@@ -579,23 +591,23 @@ worker:
         # BDATA-LEAKAGES
         rules950:
           enabled: true
-          tags: []
+          tags: ["language-multi"]
         # DATA-LEAKAGES
         rules951:
           enabled: true
-          tags: []
+          tags: ["platform-db", "platform-sql", "attack-disclosure", "language-multi"]
         # DATA-LEAKAGES
         rules952:
           enabled: true
-          tags: []
+          tags: ["language-java"]
         # DATA-LEAKAGES
         rules953:
           enabled: true
-          tags: []
+          tags: ["language-php"]
         # DATA-LEAKAGES
         rules954:
           enabled: true
-          tags: []
+          tags: ["platform-iie", "platform-windows", "language-multi"]
         # BLOCKING-EVALUATION
         rules959:
           enabled: true

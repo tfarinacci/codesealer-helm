@@ -267,6 +267,7 @@ elif [[ "$1" == "upgrade" ]]; then
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
       --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
       --set worker.ingress.port=${INGRESS_PORT} \
+      --set worker.redis.namespace=${REDIS_NAMESPACE} \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
       --wait --timeout=90s
 
@@ -297,6 +298,7 @@ elif [[ "$1" == "upgrade" ]]; then
       --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
       --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
       --set worker.ingress.port=${INGRESS_PORT} \
+      --set worker.redis.namespace=${REDIS_NAMESPACE} \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
       --set worker.config.bootloader.fsEndpoints=false \
       --set manager.enabled=true \
