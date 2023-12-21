@@ -29,7 +29,7 @@ export CODESEALER_HELM_CHART=codesealer/codesealer
 
 # Installation specific  exports
 export INGRESS_NAMESPACE=ingress-nginx
-export INGRESS_DEPLOYMENT=ingress-nginx-nginx-ingress-controller
+export INGRESS_DEPLOYMENT=ingress-nginx-controller
 export INGRESS_PORT=443
 export REDIS_NAMESPACE=redis
 
@@ -44,17 +44,13 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
     echo "#  Waiting for NGINX Ingress Controller to start"
     echo "########################################################################################"      
-
-    helm repo add nginx-stable https://helm.nginx.com/stable
-    helm install ingress-nginx nginx-stable/nginx-ingress \
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    helm install ingress-nginx ingress-nginx/ingress-nginx \
     --namespace ${INGRESS_NAMESPACE} --create-namespace \
+    --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
+    --set controller.hostPort.enabled=true \
     --wait --timeout=60s
 
-    # helm upgrade --install ingress-nginx ingress-nginx \
-    # --repo https://kubernetes.github.io/ingress-nginx \
-    # --namespace ${INGRESS_NAMESPACE} --create-namespace \
-    # --set controller.hostPort.enabled=true \
-    # --wait --timeout=60s
   else
     echo "########################################################################################"
     echo "#  Skipping NGINX Ingress Controller installation"
@@ -222,7 +218,8 @@ elif [[ "$1" == "uninstall" ]]; then
   echo "########################################################################################"
   read -r -p 'Uninstall NGINX Ingress Controller [y/n]: '
   if [ "${REPLY}" == 'y' ]; then
-    helm uninstall nginx-stable --namespace ${INGRESS_NAMESPACE}
+    helm uninstall ingress-nginx --namespace ${INGRESS_NAMESPACE}
+    helm repo remove ingress-nginx
     kubectl delete namespace ${INGRESS_NAMESPACE}
   else
     echo "########################################################################################"
