@@ -20,6 +20,8 @@ your Ingress Controller's deployment on your Kubernetes Cluster:
 export INGRESS_NAMESPACE=<ingress namespace>
 export INGRESS_DEPLOYMENT=<ingress deployment>
 export INGRESS_PORT=<ingress port>
+export INGRESS_HELM_REPO=<ingress repo URL>
+export INGRESS_HELM_CHART=<ingress chart>
 ```
 
 To use this Helm chart you will also need to set the following variable to match
@@ -44,20 +46,17 @@ Controller](https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress
 command:
 
 ```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm install ingress-nginx ingress-nginx/ingress-nginx \
+  helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
+  helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
   --namespace ${INGRESS_NAMESPACE} --create-namespace \
-  --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
-  --wait --timeout=60s
-kubectl rollout status deployment/${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} --watch
+  --wait --timeout=90s
 ```
 
 > NOTE: If using Kind, install the Ingress using the following variation
 >
 > ```bash
-> helm install ingress-nginx ingress-nginx/ingress-nginx \
->   --namespace ${INGRESS_NAMESPACE} --create-namespace \
->   --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
+> helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
+> helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
 >   --set controller.hostPort.enabled=true \
 >   --wait --timeout=60s
 > ```

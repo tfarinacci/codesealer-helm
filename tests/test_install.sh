@@ -23,14 +23,21 @@ if [ -z ${CODESEALER_TOKEN} ]; then
   echo "#####################################################################################################################"
 fi
 
-# Public Helm Repo
+# Codesealer Helm Repo
 export CODESEALER_HELM_REPO=https://raw.githubusercontent.com/tfarinacci/codesealer-helm/main/
 export CODESEALER_HELM_CHART=codesealer/codesealer
 
+# NGINX Ingress Controller Helm Repo
+export INGRESS_HELM_REPO=https://kubernetes.github.io/ingress-nginx
+export INGRESS_HELM_CHART=ingress-nginx
+export INGRESS_DEPLOYMENT=ingress-nginx-controller
+
+# export INGRESS_HELM_REPO=https://helm.nginx.com/stable
+# export INGRESS_HELM_CHART=nginx-stable
+# export INGRESS_DEPLOYMENT=nginx-stable-nginx-ingress-controller
+
 # Installation specific  exports
 export INGRESS_NAMESPACE=ingress-nginx
-export INGRESS_DEPLOYMENT=ingress-nginx-controller
-# export INGRESS_DEPLOYMENT=nginx-stable-nginx-ingress-controller
 export INGRESS_PORT=443
 export REDIS_NAMESPACE=redis
 
@@ -45,18 +52,14 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
     echo "#  Waiting for NGINX Ingress Controller to start"
     echo "########################################################################################" 
-    # helm repo add nginx-stable https://helm.nginx.com/stable
-    # helm install nginx-stable nginx-stable/nginx-ingress \
-    # --namespace ${INGRESS_NAMESPACE} --create-namespace \
-    # --wait --timeout=90s
-
-    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-    helm install ingress-nginx ingress-nginx/ingress-nginx \
+    helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
+    helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
     --namespace ${INGRESS_NAMESPACE} --create-namespace \
-    --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
-    --set controller.hostPort.enabled=true \
-    --set controller.service.loadBalancerIP=127.0.0.1 \
     --wait --timeout=90s
+
+    # --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
+    # --set controller.hostPort.enabled=true \
+    # --set controller.service.loadBalancerIP=127.0.0.1 \
 
   else
     echo "########################################################################################"
@@ -135,7 +138,7 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
     echo "# Redis password: ${REDIS_PASSWORD}"
     echo "# "
-    echo "# Waiting for Codesealer to startin ${CODESEALER_MODE} mode"
+    echo "# Waiting for Codesealer to starting `${CODESEALER_MODE}` mode"
     echo "########################################################################################"
 
     # Start Codesealer in `hybrid` mode
@@ -162,15 +165,22 @@ if [[ "$1" == "install" ]]; then
     kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'
     
     echo "########################################################################################"
-    echo "#  Restart NGINX Ingress Controller"
+    echo "#  Restart NGINX Ingress Controller - only necessary if the patch did not trigger the"
+    echo "#  restart"
     echo "########################################################################################"
-    read -r -s -p 'Press any key to continue.'
-
-    kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
-    echo "########################################################################################"
-    echo "#  Waiting for NGINX Ingress Controller to restart"
-    echo "########################################################################################"  
-    kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
+    read -r -p 'Restart Ingress Controller? [y/n]: '
+    if [[ "${REPLY}" == 'y' ]]; then
+      kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
+      echo "########################################################################################"
+      echo "#  Waiting for NGINX Ingress Controller to restart"
+      echo "########################################################################################"  
+      kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
+    else
+      echo "########################################################################################"
+      echo "#  Skipping Ingress Controller Restart"
+      echo "########################################################################################"
+      kubectl get pods --namespace ${INGRESS_NAMESPACE}
+    fi
 
   elif [[ "${REPLY}" == "standalone" ]]; then
     # Start Codesealer in `standalone` mode
@@ -233,11 +243,8 @@ elif [[ "$1" == "uninstall" ]]; then
   echo "########################################################################################"
   read -r -p 'Uninstall NGINX Ingress Controller [y/n]: '
   if [ "${REPLY}" == 'y' ]; then
-    nginx-stable
-    # helm uninstall nginx-stable --namespace ${INGRESS_NAMESPACE}
-    # helm repo remove nginx-stable
-    helm uninstall ingress-nginx --namespace ${INGRESS_NAMESPACE}
-    helm repo remove ingress-nginx
+    helm uninstall ${INGRESS_HELM_CHART} --namespace ${INGRESS_NAMESPACE}
+    helm repo remove ${INGRESS_HELM_CHART}
     kubectl delete namespace ${INGRESS_NAMESPACE}
   else
     echo "########################################################################################"
