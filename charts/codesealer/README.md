@@ -17,7 +17,7 @@ This installation requires a Kubernetes Cluster with kubectl.
 
 The following implementations are supported:
 
-## kubectl
+### kubectl
 
 <!-- overview -->
 The Kubernetes command-line tool, [kubectl](/docs/reference/kubectl/kubectl/), allows
@@ -33,9 +33,7 @@ Find your preferred operating system below.
 - [Install kubectl on macOS](/docs/tasks/tools/install-kubectl-macos)
 - [Install kubectl on Windows](/docs/tasks/tools/install-kubectl-windows)
 
-1. Docker Desktop with Kubernetes enabled (preferred):  https://www.docker.com/products/docker-desktop/
-
-## docker desktop
+### docker desktop
 
 [`docker desktop`](https://www.docker.com/products/docker-desktop/) lets you install Docker Desktop to 
 run Kubernetes on your local computer.
@@ -45,7 +43,7 @@ shows you what you need to do to get up and running with Docker Desktop.
 
 <a class="btn btn-primary" href="https://www.docker.com/blog/getting-started-with-docker-desktop/" role="button" aria-label="View kind Quick Start Guide">View kind Quick Start Guide</a>
 
-## kind
+### kind
 
 [`kind`](https://kind.sigs.k8s.io/) lets you run Kubernetes on
 your local computer. This tool requires that you have either
@@ -56,7 +54,7 @@ shows you what you need to do to get up and running with kind.
 
 <a class="btn btn-primary" href="https://kind.sigs.k8s.io/docs/user/quick-start/" role="button" aria-label="View kind Quick Start Guide">View kind Quick Start Guide</a>
 
-## minikube
+### minikube
 
 Like `kind`, [`minikube`](https://minikube.sigs.k8s.io/) is a tool that lets you run Kubernetes
 locally. `minikube` runs an all-in-one or a multi-node local Kubernetes cluster on your personal
@@ -72,12 +70,12 @@ on getting the tool installed.
 Once you have `minikube` working, you can use it to
 [run a sample application](/docs/tutorials/hello-minikube/).
 
+### Ingress
+
 Additionally you will need an ingress and an application to protect. Below are steps to
 get started with a demo application and an Nginx Ingress. For guides on how to use this
 Helm chart with specific Kubernetes implementations, see the ["Kubernetes Implementation
 Specifics"](#kubernetes-implementation-specifics) section.
-
-### Ingress
 
 This Helm chart will install Codesealer as a sidecar to an existing ingress deployment.
 If you don't have an ingress already, you can install an [Nginx Ingress
