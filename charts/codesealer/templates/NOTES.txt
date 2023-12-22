@@ -2,13 +2,13 @@
 The first time core-manager is started, it will create a Maintenance Administrator. 
 To see the credentials for this account, check the core-manager log: 
 
-  $ kubectl get pods -n codesealer-system
-  $ kubectl logs <core-manager-pod> -n codesealer-system | grep password
+  $ export POD_NAME=$(kubectl get pods --no-headers -o custom-columns=":metadata.name" -n codesealer-system -l app.kubernetes.io/name=codesealer)
+  $ kubectl logs $POD_NAME -n codesealer-system | grep password
 
 The manager can be accessed at https://localhost
 
   1. Log in with admin account and the manager password from the log
-  2. Go to Documentation to setup your first endpoint 
+  2. Go to Documentation to setup your first endpoint
 
 {{ else }}
 To enable Codesealer on Ingress Controller:
