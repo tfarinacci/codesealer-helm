@@ -152,7 +152,7 @@ Codesealer has the following default settings which affect Redis and WAF:
   --set worker.config.endpoint.crs.paranoiaLevel=1 \
 
 > NOTE: If you would like to install Codesealer in `Standard` mode (with a local Manager) see
->       [Codesealer Standalone Helm Chart](./README-standalone.md)
+>       [Codesealer Standalone Helm Chart](/README-standalone.md)
 
 ## Upgrading
 
@@ -188,7 +188,7 @@ kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NA
 ```
 
 > NOTE: If you would like to upgrade Codesealer in `Standard` mode (with a local Manager) see
->       [Codesealer Standalone Helm Chart](./README-standalone.md)
+>       [Codesealer Standalone Helm Chart](/README-standalone.md)
 
 ## Uninstalling
 
