@@ -13,7 +13,7 @@ apiVersion: extensions/v1beta1
 {{- end }}
 kind: Ingress
 metadata:
-  name: {{ $svcName }}
+  name: {{ .Values.worker.name }}
   namespace: {{ .Values.ingress.namespace }}
   labels:
     {{- include "codesealer.labels" . | nindent 4 }}
