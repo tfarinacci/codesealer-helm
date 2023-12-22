@@ -20,13 +20,13 @@ The `Mutating Admission` Webhook injects Codesealer as a sidecar:
 
 ![sidecar proxy](./img/sidecar-proxy.png)
 
-Traffic originally destined for the Ingress Controller is `pre-routed` to Codesealer
-and then passed back to the Ingress Controler:
+Traffic originally destined for the Ingress Controller (Service) is `pre-routed` to Codesealer (Proxy)
+and then passed back to the Ingress Controller (Service):
 
 ![pod networking](./img/pod-networking.png)
 
-In this example the Proxy is Codesealer, a reverse proxy.  Traffic originally destinged for the Service over
-the ethernet eth0 interface, which in this example is the Ingress Controller, is pre-routed to Codesealer.  
+In this example the `Proxy` is Codesealer, a reverse proxy.  Traffic originally destinged for the `Service` 
+(Ingress Controller ) over the ethernet eth0 interface is pre-routed to Codesealer for processing.  
 Once Codesealer processes the payload it will send the traffic to the Ingress Controller over the loopback 
 l0 interface on the original port.
 
