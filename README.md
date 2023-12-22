@@ -21,12 +21,17 @@ Ingress Controller is `pre-routed` to Codesealer and then passed back to the Ing
 
 ![sidecar proxy](./img/sidecar-proxy.png)
 
-In this example the `Proxy` is Codesealer, a reverse proxy.  Traffic originally destinged for the `Service` 
-(Ingress Controller ) over the ethernet eth0 interface is pre-routed to Codesealer for processing.  
-Once Codesealer processes the payload it will send the traffic to the Ingress Controller over the loopback 
-l0 interface on the original port.
+In this example the `Reverse Proxy` is Codesealer.  Traffic originally destinged for the `Ingress Controller` 
+over the ethernet eth0 interface is pre-routed to Codesealer for processing. Once Codesealer processes the payload 
+it will send the traffic to the Ingress Controller over the loopback l0 interface on the original port.
 
-There are two methods, similar to Istio, to pre-route the traffic:
+Codesealer support multiple Ingress Controllers including NGINX Ingress, Contour, Istio Gateway,
+Kubernetes Gateway, and Cloud Provider Ingress Controllers (e.g. AWS ALB)
+
+Although this example uses an Ingress Controller for the injection, Codesealer can be injected into any pod to protect
+any service. It functions similar to an Istio Service Mesh which uses an Envoy Proxy instead.
+
+There are two methods, similar to Istio Service Mesh, to pre-route the traffic:
 
 1. A privileged Init Container that briefly runs in the same pod as the Ingress Controller [Kubernetes Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/)
 2. Using a chained CNI Plugin which does not require the Ingress Controller to allow privilege escalation
