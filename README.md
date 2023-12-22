@@ -17,7 +17,9 @@ as a `Mutating Admission` Webhook:
 ![admission webhook flow](./img/webhook.png)
 
 The `Mutating Admission` Webhook injects Codesealer as a sidecar. Traffic originally destined for the 
-Ingress Controller is `pre-routed` to Codesealer and then passed back to the Ingress Controller:
+Ingress Controller is `pre-routed` to Codesealer and then passed back to the Ingress Controller.  This 
+approach requires no changes to the application other than providing Codesealer with the ingress 
+certificates.
 
 ![sidecar proxy](./img/sidecar-proxy.png)
 
