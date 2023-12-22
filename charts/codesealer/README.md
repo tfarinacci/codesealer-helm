@@ -165,8 +165,14 @@ Codesealer has the following default settings which affect Redis and WAF:
 >   --set manager.enabled=true \
 >   --wait --timeout=90s
 > ```
-
->       [Codesealer Standalone Helm Chart](/charts/codesealer/README-standalone.md)
+>
+>  NOTE: To access local manager issue the following command:
+>
+> ```bash
+>kubectl port-forward service/core-manager 8080
+> ```
+> You can access the manager at https://localhost:8080
+>
 
 ## Upgrading
 
