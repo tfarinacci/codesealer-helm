@@ -21,11 +21,11 @@ To use this Helm chart you will also need to set the following variables to matc
 your Ingress Controller's deployment on your Kubernetes Cluster:
 
 ```bash
-export INGRESS_NAMESPACE=<ingress namespace>
-export INGRESS_DEPLOYMENT=<ingress deployment>
-export INGRESS_PORT=<ingress port>
-export INGRESS_HELM_REPO=<ingress repo URL>
-export INGRESS_HELM_CHART=<ingress chart>
+export INGRESS_NAMESPACE=ingress-nginx
+export INGRESS_DEPLOYMENT=ingress-nginx-controller
+export INGRESS_PORT=443
+export INGRESS_HELM_REPO=https://kubernetes.github.io/ingress-nginx
+export INGRESS_HELM_CHART=ingress-nginx
 ```
 
 Additionally you will need an ingress and an application to protect. Below are steps to
@@ -80,7 +80,7 @@ To use this Helm chart you will also need to set the following variable to match
 your Redis deployment on your Kubernetes Cluster:
 
 ```bash
-export REDIS_NAMESPACE=<Redis namespace>
+export REDIS_NAMESPACE=redis
 ```
 
 Codesealer requires Redis. If you don't have your own implementation of Redis you can install 

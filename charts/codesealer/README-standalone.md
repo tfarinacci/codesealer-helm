@@ -28,7 +28,7 @@ To use this Helm chart you will also need to set the following variable to match
 your Redis deployment on your Kubernetes Cluster:
 
 ```bash
-export REDIS_NAMESPACE=<Redis namespace>
+export REDIS_NAMESPACE=redis
 ```
 
 You will need the Redis generated password to install or upgrade Codesealer.  You can get that password with
