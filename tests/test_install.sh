@@ -138,7 +138,7 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
     echo "# Redis password: ${REDIS_PASSWORD}"
     echo "# "
-    echo "# Waiting for Codesealer to starting `${CODESEALER_MODE}` mode"
+    echo "# Waiting for Codesealer to starting ${CODESEALER_MODE} mode"
     echo "########################################################################################"
 
     # Start Codesealer in `hybrid` mode
