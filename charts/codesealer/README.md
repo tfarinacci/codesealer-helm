@@ -13,6 +13,10 @@ In the following we assume that the access token is set in the following way:
 export CODESEALER_TOKEN=<access token>
 ```
 
+This installation requires a Kubernetes Cluster with kubectl.  
+
+### Ingress
+
 To use this Helm chart you will also need to set the following variables to match
 your Ingress Controller's deployment on your Kubernetes Cluster:
 
@@ -24,26 +28,15 @@ export INGRESS_HELM_REPO=<ingress repo URL>
 export INGRESS_HELM_CHART=<ingress chart>
 ```
 
-To use this Helm chart you will also need to set the following variable to match
-your Redis deployment on your Kubernetes Cluster:
-
-```bash
-export REDIS_NAMESPACE=<Redis namespace>
-```
-
-This installation requires a Kubernetes Cluster with kubectl.  
-
-### Ingress
-
 Additionally you will need an ingress and an application to protect. Below are steps to
 get started with a demo application and an Nginx Ingress. For guides on how to use this
 Helm chart with specific Kubernetes implementations, see the ["Kubernetes Implementation
 Specifics"](#kubernetes-implementation-specifics) section.
 
 This Helm chart will install Codesealer as a sidecar to an existing ingress deployment.
-If you don't have an ingress already, you can install an [Nginx Ingress
-Controller](https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx) using the following
-command:
+
+If you don't have an ingress already, you can install an [Nginx Ingress Controller](https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx) 
+using the following command:
 
 ```bash
 helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
@@ -82,6 +75,13 @@ helm install juice-shop securecodebox/juice-shop --namespace juice-shop --create
 ```
 
 ### Redis
+
+To use this Helm chart you will also need to set the following variable to match
+your Redis deployment on your Kubernetes Cluster:
+
+```bash
+export REDIS_NAMESPACE=<Redis namespace>
+```
 
 Codesealer requires Redis. If you don't have your own implementation of Redis you can install 
 [Bitnami package for Redis(R)](https://github.com/bitnami/charts/blob/main/bitnami/redis/README.md) 

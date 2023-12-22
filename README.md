@@ -39,4 +39,3 @@ Codesealer supports both methods
 
 ## Reference
 1. https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
-2. https://github.com/kubernetes/kubernetes/tree/release-1.9/test/images/webhook
