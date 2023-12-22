@@ -5,7 +5,7 @@ To see the credentials for this account, check the core-manager log:
   $ kubectl get pods -n codesealer-system
   $ kubectl logs <core-manager-pod> -n codesealer-system | grep password
 
-  $ kubectl port-forward service/core-manager 8080
+  $ kubectl port-forward service/core-manager -n {{ .Values.ingress.namespace }} 8080:8444 &
 
 The manager can be accessed at https://localhost:8080
 
