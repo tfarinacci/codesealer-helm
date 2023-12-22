@@ -26,9 +26,8 @@ clear
 
 # Codesealer Public Helm Repo
 export CODESEALER_HELM_REPO=https://raw.githubusercontent.com/tfarinacci/codesealer-helm/main/
-export CODESEALER_HELM_CHART=codesealer/codesealer
 # export CODESEALER_HELM_REPO=https://code-sealer.github.io/helm-charts
-# export CODESEALER_HELM_CHART=codesealer/codesealer
+export CODESEALER_HELM_CHART=codesealer/codesealer
 
 # NGINX Ingress Controller Helm Repo
 export INGRESS_HELM_REPO=https://kubernetes.github.io/ingress-nginx
