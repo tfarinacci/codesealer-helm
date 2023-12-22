@@ -169,9 +169,9 @@ Codesealer has the following default settings which affect Redis and WAF:
 >  NOTE: To access local manager issue the following command:
 >
 > ```bash
->kubectl port-forward service/core-manager -n ${INGRESS_NAMESPACE} 8080:8444 &
+>kubectl port-forward service/core-manager -n ${INGRESS_NAMESPACE} 84444:8444 &
 > ```
-> You can access the manager at https://localhost:8080
+> You can access the manager at https://localhost:8444
 >
 
 ## Upgrading
