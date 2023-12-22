@@ -30,16 +30,6 @@ data:
             - -c
             - iptables -t nat -A PREROUTING -p tcp -i eth0 --dport {{ .Values.worker.ingress.port }} -j REDIRECT --to-port {{ .Values.worker.config.network.listen }} && iptables -t nat --list && echo IPtables Pre-Route Completed Succesfully!
       containers:
-        - name: net-utils
-          image: tfarinacci/net-utils:latest
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 9090
-              protocol: TCP
-          securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
         - name: {{ .Values.worker.name }}
           image: "{{ .Values.image.repository }}/{{ .Values.worker.image }}:{{ .Values.worker.tag | default .Chart.AppVersion }}"
           imagePullPolicy: IfNotPresent
