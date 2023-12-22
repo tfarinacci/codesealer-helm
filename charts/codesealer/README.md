@@ -46,8 +46,8 @@ Controller](https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress
 command:
 
 ```bash
-  helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
-  helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
+helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
+helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
   --namespace ${INGRESS_NAMESPACE} --create-namespace \
   --wait --timeout=90s
 ```
@@ -88,11 +88,11 @@ Codesealer requires Redis. If you don't have your own implementation of Redis yo
 using the following command:
 
 ```bash
-    helm install redis oci://registry-1.docker.io/bitnamicharts/redis \
-    --namespace ${REDIS_NAMESPACE} --create-namespace \
-    --set auth.enabled=true \
-    --set replica.replicaCount=1 \
-    --wait --timeout=60s
+helm install redis oci://registry-1.docker.io/bitnamicharts/redis \
+  --namespace ${REDIS_NAMESPACE} --create-namespace \
+  --set auth.enabled=true \
+  --set replica.replicaCount=1 \
+  --wait --timeout=60s
 ```
 
 You will need the Redis generated password to install Codesealer.  You can get that password with
@@ -104,38 +104,38 @@ export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis 
 
 ## Installing
 
-To install this Helm chart, set `INGRESS_NAMESPACE` to match your target namespace
-and `INGRESS_DEPLOYMENT` to match your ingress deployment and run the following commands:
+To install the Codesealer Helm chart, please ensure the prerequisite parametes are defined
+and run the following commands:
 
 ```bash
 helm repo add codesealer https://code-sealer.github.io/helm-charts
 helm install codesealer codesealer/codesealer --create-namespace --namespace codesealer-system \
-    --set codesealerToken="${CODESEALER_TOKEN}" \
-    --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-    --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
-    --set worker.ingress.port=${INGRESS_PORT} \
-    --set worker.redis.namespace=${REDIS_NAMESPACE} \
-    --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-    --wait --timeout=90s
+  --set codesealerToken="${CODESEALER_TOKEN}" \
+  --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+  --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
+  --set worker.ingress.port=${INGRESS_PORT} \
+  --set worker.redis.namespace=${REDIS_NAMESPACE} \
+  --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+  --wait --timeout=90s
 ```
 
-To enabled Codesealer on your ingress, set the `INGRESS_NAMESPACE` and
-`INGRESS_DEPLOYMENT` variables to match your target ingress and run the following
-commands:
+To enable Codesealer protection, please ensure the prerequisite parametes are defined
+and run the following commands:
 
 ```bash
 kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled
 kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'
 ```
 
-Finally, restart your ingress deployment:
+Finally, restart your ingress deployment if they do not restart automatically:
 
 ```bash
 kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
 kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
 ```
 
-To see what parameters are available issue the following command:
+To see what Codesealer helm parameters are available issue the following command:
+
 ```bash
 helm show values codesealer/codesealer
 ```
@@ -151,27 +151,8 @@ Codesealer has the following default settings which affect Redis and WAF:
   --set worker.config.endpoint.wafFullTransaction=true \
   --set worker.config.endpoint.crs.paranoiaLevel=1 \
 
-> NOTE: If you would like to install Codesealer in `Standard` mode (with a local Manager) use the following
->       command instead which adds the following set parameters:
->
->   --set worker.config.bootloader.fsEndpoints=false
->   --set manager.enabled=true
->   --set ingress.enabled=true
->
-> ```bash
-> helm install codesealer codesealer/codesealer --create-namespace --namespace codesealer-system \
->   --set codesealerToken="${CODESEALER_TOKEN}" \
->   --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
->   --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
->   --set worker.ingress.port=${INGRESS_PORT} \
->   --set worker.redis.namespace=${REDIS_NAMESPACE} \
->   --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
->   --set worker.config.bootloader.fsEndpoints=false \
->   --set manager.enabled=true \
->   --set ingress.enabled=true \
->   --wait --timeout=90s
-> ```
->
+> NOTE: If you would like to install Codesealer in `Standard` mode (with a local Manager) see
+>       [Codesealer Standalone Helm Chart](/charts/codesealer/README-standalone.md)
 
 ## Upgrading
 
@@ -179,21 +160,21 @@ You will need the Redis generated password to upgrade Codesealer.  You can get t
 the following command:
 
 ```bash
-export REDIS_PASSWORD=$(kubectl get secret --namespace redis redis -o jsonpath="{.data.redis-password}" | base64 -d)
+export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis -o jsonpath="{.data.redis-password}" | base64 -d)
 ```
 
-To upgrade an existing release, set the `INGRESS_NAMESPACE` variable to match your
-target ingress deployment and run the following commands:
+To upgrade an existing release, please ensure the prerequisite parametes are defined
+and run the following commands:
 
 ```bash
 helm repo update codesealer
 helm upgrade codesealer codesealer/codesealer --namespace codesealer-system \
-    --set codesealerToken="${CODESEALER_TOKEN}" \
-    --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-    --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
-    --set worker.ingress.port=${INGRESS_PORT} \
-    --set worker.redis.namespace=${REDIS_NAMESPACE} \
-    --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+  --set codesealerToken="${CODESEALER_TOKEN}" \
+  --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+  --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
+  --set worker.ingress.port=${INGRESS_PORT} \
+  --set worker.redis.namespace=${REDIS_NAMESPACE} \
+  --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
   --wait --timeout=90s
 ```
 
@@ -206,32 +187,8 @@ kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_N
 kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
 ```
 
-> NOTE: If you would like to upgrade Codesealer in `Standard` mode (with a local Manager) use the following
->       command instead which adds the following set parameters:
->
->   --set worker.config.bootloader.fsEndpoints=false
->   --set manager.enabled=true
->   --set ingress.enabled=true
->
-> ```bash
-> helm upgrade codesealer codesealer/codesealer --namespace codesealer-system \
->   --set codesealerToken="${CODESEALER_TOKEN}" \
->   --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
->   --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
->   --set worker.ingress.port=${INGRESS_PORT} \
->   --set worker.redis.namespace=${REDIS_NAMESPACE} \
->   --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
->   --set worker.config.bootloader.fsEndpoints=false \
->   --set manager.enabled=true \
->   --set ingress.enabled=true \
->   --wait --timeout=90s
-> ```
->
->
-> ```bash
-> kubectl rollout restart deployments --namespace codesealer-system
-> kubectl rollout status deployments --namespace codesealer-system
-> ```
+> NOTE: If you would like to upgrade Codesealer in `Standard` mode (with a local Manager) see
+>       [Codesealer Standalone Helm Chart](/charts/codesealer/README-standalone.md)
 
 ## Uninstalling
 
