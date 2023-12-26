@@ -53,11 +53,15 @@ if [[ "$1" == "install" ]]; then
     helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
     helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
     --namespace ${INGRESS_NAMESPACE} --create-namespace \
+    --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \  # Kind Cluster
+    --set controller.hostPort.enabled=true \                          # Kind Cluster
     --wait --timeout=90s
 
-    # --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
-    # --set controller.hostPort.enabled=true \
     # --set controller.service.loadBalancerIP=127.0.0.1 \
+
+  # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error with Kind Cluster
+  CA=$(kubectl -n ingress-nginx get secret ingress-nginx-admission -ojsonpath='{.data.ca}')
+  kubectl patch validatingwebhookconfigurations ingress-nginx-admission --type='json' -p='[{"op": "add", "path": "/webhooks/0/clientConfig/caBundle", "value":"'$CA'"}]'  
 
   else
     echo "########################################################################################"
