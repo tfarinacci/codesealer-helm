@@ -41,6 +41,11 @@ webhook:
     targetPort: 8443
     scheme: HTTPS
 
+  initContainers:
+    # If enabled Codesealer will use an initContainer to do the iptables pre-route
+    # If not enabled (false), it will use Codesealer's CNI which will be installed
+    enabled: false
+
   annotations: {}
 
   env:
