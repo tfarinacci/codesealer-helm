@@ -23,6 +23,9 @@ probes:
   failureThreshold: 10
 
 initContainers:
+  # If enabled Codesealer will use an initContainer to do the iptables pre-route
+  # If not enabled (false), it will use Codesealer's CNI which will be installed
+  enabled: false
   name: codesealer-init-networking
   image: codesealer-init-networking
   tag: latest
@@ -40,11 +43,6 @@ webhook:
     port: 443
     targetPort: 8443
     scheme: HTTPS
-
-  initContainers:
-    # If enabled Codesealer will use an initContainer to do the iptables pre-route
-    # If not enabled (false), it will use Codesealer's CNI which will be installed
-    enabled: false
 
   annotations: {}
 
