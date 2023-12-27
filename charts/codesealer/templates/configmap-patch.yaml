@@ -14,7 +14,7 @@ data:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.worker.initContainers.enabled }}
+      {{- if .Values.webhook.initContainers.enabled }}
       initContainers:
         - name: {{ .Values.initContainers.name }}
           image: "{{ .Values.image.repository }}/{{ .Values.initContainers.image }}:{{ .Values.initContainers.tag | default .Chart.AppVersion }}"
