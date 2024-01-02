@@ -165,6 +165,7 @@ if [[ "$1" == "install" ]]; then
 
     kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled
     kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'
+    kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/dport":"443"}}}} }'
     
     echo "########################################################################################"
     echo "#  Restart NGINX Ingress Controller - only necessary if the patch did not trigger the"
