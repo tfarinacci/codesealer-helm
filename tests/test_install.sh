@@ -11,7 +11,7 @@ if [ -z "${CODESEALER_TOKEN}" ]; then
   exit 1
 fi
 
-set -ueo pipefail
+## set -ueo pipefail
 
 if [[ "$#" -ne 1 ]]; then
   echo "####################################################################################################################"
@@ -25,7 +25,7 @@ fi
 clear
 
 # Codesealer Public Helm Repo
-# export CODESEALER_HELM_REPO=https://code-sealer.github.io/helm-charts
+## export CODESEALER_HELM_REPO=https://code-sealer.github.io/helm-charts
 export CODESEALER_HELM_REPO=https://raw.githubusercontent.com/tfarinacci/codesealer-helm/main/
 export CODESEALER_HELM_CHART=codesealer/codesealer
 
@@ -38,10 +38,11 @@ export INGRESS_DEPLOYMENT=ingress-nginx-controller
 export INGRESS_NAMESPACE=ingress-nginx
 export INGRESS_PORT=443
 export REDIS_NAMESPACE=redis
+export CODESEALER_CNI=true
 
 if [[ "$1" == "install" ]]; then
   echo "########################################################################################"
-  echo "#  Do you wish to install NGINX Ingress Controller to access the OWASP Juice Shop Application?"
+  echo "#  Do you wish to install NGINX Ingress Controller?"
   echo "#  "
   echo "#  Documentation: https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx"
   echo "########################################################################################"
@@ -144,15 +145,30 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
 
     # Start Codesealer in `hybrid` mode
-    helm install codesealer ${CODESEALER_HELM_CHART} \
-      --create-namespace --namespace codesealer-system \
-      --set codesealerToken="${CODESEALER_TOKEN}" \
-      --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-      --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
-      --set worker.ingress.port=${INGRESS_PORT} \
-      --set worker.redis.namespace=${REDIS_NAMESPACE} \
-      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --wait --timeout=90s
+    if [[ "${CODESEALER_CNI}" ]]; then
+      # Use Codesealer CNI to pre-route traffic
+      helm install codesealer ${CODESEALER_HELM_CHART} \
+        --create-namespace --namespace codesealer-system \
+        --set codesealerToken="${CODESEALER_TOKEN}" \
+        --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+        --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
+        --set worker.ingress.port=${INGRESS_PORT} \
+        --set worker.redis.namespace=${REDIS_NAMESPACE} \
+        --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+        --set initContainers.enabled=false \
+        --wait --timeout=90s
+    else
+      # Use Codesealer init-container to pre-route traffic
+      helm install codesealer ${CODESEALER_HELM_CHART} \
+        --create-namespace --namespace codesealer-system \
+        --set codesealerToken="${CODESEALER_TOKEN}" \
+        --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
+        --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
+        --set worker.ingress.port=${INGRESS_PORT} \
+        --set worker.redis.namespace=${REDIS_NAMESPACE} \
+        --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+        --wait --timeout=90s
+    fi
 
     echo "########################################################################################"
     echo "#  Activate Codesealer by applying labels and annotations:"
@@ -166,7 +182,8 @@ if [[ "$1" == "install" ]]; then
 
     kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled
     kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'
-    
+    kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/dport":"'${INGRESS_PORT}'"}}}} }'
+
     echo "########################################################################################"
     echo "#  Restart NGINX Ingress Controller - only necessary if the patch did not trigger the"
     echo "#  restart"
