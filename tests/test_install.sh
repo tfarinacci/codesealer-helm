@@ -33,6 +33,7 @@ export CODESEALER_HELM_CHART=codesealer/codesealer
 export INGRESS_HELM_REPO=https://kubernetes.github.io/ingress-nginx
 export INGRESS_HELM_CHART=ingress-nginx
 export INGRESS_DEPLOYMENT=ingress-nginx-controller
+export INGRESS_SERVICE=ingress-nginx-controller
 
 # Installation specific  exports
 export INGRESS_NAMESPACE=ingress-nginx
@@ -60,8 +61,11 @@ if [[ "$1" == "install" ]]; then
     --wait --timeout=120s
 
   # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error with Kind Cluster
-  CA=$(kubectl -n ingress-nginx get secret ingress-nginx-admission -ojsonpath='{.data.ca}')
+  CA=$(kubectl -n ${INGRESS_NAMESPACE} get secret ingress-nginx-admission -ojsonpath='{.data.ca}')
   kubectl patch validatingwebhookconfigurations ingress-nginx-admission --type='json' -p='[{"op": "add", "path": "/webhooks/0/clientConfig/caBundle", "value":"'$CA'"}]'  
+
+  # Patch EXTERNAL_IP
+  kubectl patch svc ${INGRESS_SERVICE} -n ${INGRESS_NAMESPACE} -p '{"spec": {"type": "LoadBalancer", "externalIPs":["192.168.1.69"]}}'
 
   else
     echo "########################################################################################"
@@ -157,6 +161,13 @@ if [[ "$1" == "install" ]]; then
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
         --set initContainers.enabled=false \
         --wait --timeout=90s
+
+      echo "########################################################################################"
+      echo "#  Installing Codesealer CNI"
+      echo "########################################################################################"
+      helm repo add codesealer-cni https://raw.githubusercontent.com/tfarinacci/codesealer-cni/main/
+      helm install codesealer-cni codesealer-cni/codesealer-cni --namespace kube-system
+
     else
       # Use Codesealer init-container to pre-route traffic
       helm install codesealer ${CODESEALER_HELM_CHART} \
