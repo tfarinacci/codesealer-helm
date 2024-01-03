@@ -39,7 +39,7 @@ export INGRESS_SERVICE=ingress-nginx-controller
 export INGRESS_NAMESPACE=ingress-nginx
 export INGRESS_PORT=443
 export REDIS_NAMESPACE=redis
-export CODESEALER_CNI=true
+export CODESEALER_CNI=false
 
 if [[ "$1" == "install" ]]; then
   echo "########################################################################################"
@@ -56,16 +56,17 @@ if [[ "$1" == "install" ]]; then
     # Kind Cluster configuration
     helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
     --namespace ${INGRESS_NAMESPACE} --create-namespace \
-    --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
-    --set controller.hostPort.enabled=true \
     --wait --timeout=120s
+
+    # --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
+    # --set controller.hostPort.enabled=true \
 
   # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error with Kind Cluster
   CA=$(kubectl -n ${INGRESS_NAMESPACE} get secret ingress-nginx-admission -ojsonpath='{.data.ca}')
   kubectl patch validatingwebhookconfigurations ingress-nginx-admission --type='json' -p='[{"op": "add", "path": "/webhooks/0/clientConfig/caBundle", "value":"'$CA'"}]'  
 
   # Patch EXTERNAL_IP
-  kubectl patch svc ${INGRESS_SERVICE} -n ${INGRESS_NAMESPACE} -p '{"spec": {"type": "LoadBalancer", "externalIPs":["192.168.1.69"]}}'
+  # kubectl patch svc ${INGRESS_SERVICE} -n ${INGRESS_NAMESPACE} -p '{"spec": {"type": "LoadBalancer", "externalIPs":["192.168.1.69"]}}'
 
   else
     echo "########################################################################################"
@@ -149,7 +150,7 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
 
     # Start Codesealer in `hybrid` mode
-    if [[ "${CODESEALER_CNI}" ]]; then
+    if [[ ${CODESEALER_CNI} == true ]]; then
       # Use Codesealer CNI to pre-route traffic
       helm install codesealer ${CODESEALER_HELM_CHART} \
         --create-namespace --namespace codesealer-system \
