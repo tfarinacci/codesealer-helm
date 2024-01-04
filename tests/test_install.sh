@@ -11,7 +11,7 @@ if [ -z "${CODESEALER_TOKEN}" ]; then
   exit 1
 fi
 
-## set -ueo pipefail
+# set -ueo pipefail
 
 if [[ "$#" -ne 1 ]]; then
   echo "####################################################################################################################"
@@ -25,7 +25,7 @@ fi
 clear
 
 # Codesealer Public Helm Repo
-## export CODESEALER_HELM_REPO=https://code-sealer.github.io/helm-charts
+# export CODESEALER_HELM_REPO=https://code-sealer.github.io/helm-charts
 export CODESEALER_HELM_REPO=https://raw.githubusercontent.com/tfarinacci/codesealer-helm/main/
 export CODESEALER_HELM_CHART=codesealer/codesealer
 
@@ -33,7 +33,6 @@ export CODESEALER_HELM_CHART=codesealer/codesealer
 export INGRESS_HELM_REPO=https://kubernetes.github.io/ingress-nginx
 export INGRESS_HELM_CHART=ingress-nginx
 export INGRESS_DEPLOYMENT=ingress-nginx-controller
-export INGRESS_SERVICE=ingress-nginx-controller
 
 # Installation specific  exports
 export INGRESS_NAMESPACE=ingress-nginx
@@ -42,33 +41,63 @@ export REDIS_NAMESPACE=redis
 export CODESEALER_CNI=false
 
 if [[ "$1" == "install" ]]; then
+  # Check which Kubernetes distribution is installed
   echo "########################################################################################"
-  echo "#  Do you wish to install NGINX Ingress Controller?"
-  echo "#  "
-  echo "#  Documentation: https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx"
+  echo "#  Installing Codesealer"
   echo "########################################################################################"
-  read -r -p 'Install NGINX Ingress Controller [y/n]: '
-  if [[ "${REPLY}" == 'y' ]]; then
-    echo "########################################################################################"
-    echo "#  Waiting for NGINX Ingress Controller to start"
-    echo "########################################################################################" 
-    helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
-    # Kind Cluster configuration
-    helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
-    --namespace ${INGRESS_NAMESPACE} --create-namespace \
-    --set controller.hostPort.enabled=true \
-    --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
-    --set controller.service.type=NodePort \
-    --wait --timeout=60s
+  read -r -p 'Which Kubernetes distribution are you using? [Docker/Kind/Minikube]: '
 
-  # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error with Kind Cluster
-  # CA=$(kubectl -n ${INGRESS_NAMESPACE} get secret ingress-nginx-admission -ojsonpath='{.data.ca}')
-  # kubectl patch validatingwebhookconfigurations ingress-nginx-admission --type='json' -p='[{"op": "add", "path": "/webhooks/0/clientConfig/caBundle", "value":"'$CA'"}]'  
+  if [[ "${REPLY}" == "[Kk][Ii][Nn][Dd]" ]]; then
+
+    echo "########################################################################################"
+    echo "#  Do you wish to install NGINX Ingress Controller on a Kind Cluster"
+    echo "#  "
+    echo "#  Documentation: https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx"
+    echo "########################################################################################"
+    read -r -p 'Install NGINX Ingress Controller [y/n]: '
+    if [[ "${REPLY}" == 'y' ]]; then
+      echo "########################################################################################"
+      echo "#  Waiting for NGINX Ingress Controller to start"
+      echo "########################################################################################" 
+      helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
+      # Kind Cluster configuration
+      helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
+      --namespace ${INGRESS_NAMESPACE} --create-namespace \
+      --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
+      --set controller.hostPort.enabled=true \
+      --set controller.service.type=NodePort \
+      --wait --timeout=60s
+
+    else
+      echo "########################################################################################"
+      echo "#  Skipping NGINX Ingress Controller installation"
+      echo "########################################################################################"
+    fi
 
   else
+
     echo "########################################################################################"
-    echo "#  Skipping NGINX Ingress Controller installation"
+    echo "#  Do you wish to install NGINX Ingress Controller"
+    echo "#  "
+    echo "#  Documentation: https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx"
     echo "########################################################################################"
+    read -r -p 'Install NGINX Ingress Controller [y/n]: '
+    if [[ "${REPLY}" == 'y' ]]; then
+      echo "########################################################################################"
+      echo "#  Waiting for NGINX Ingress Controller to start"
+      echo "########################################################################################" 
+      helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
+      # Other Cluster configuration
+      helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
+      --namespace ${INGRESS_NAMESPACE} --create-namespace \
+      --wait --timeout=60s
+
+    else
+      echo "########################################################################################"
+      echo "#  Skipping NGINX Ingress Controller installation"
+      echo "########################################################################################"
+    fi
+
   fi
 
   echo "########################################################################################"
@@ -184,14 +213,15 @@ if [[ "$1" == "install" ]]; then
     echo "# "
     echo "# $ kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled"
     echo "# "
-    echo "# $ kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'"
+    echo "# $ kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} \ "
+    echo "#   -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled", "codesealer.com/dport":"'${INGRESS_PORT}'"}}}} }'"
     echo "# "
     echo "########################################################################################"
     read -r -s -p 'Press any key to continue.'
 
     kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled
-    kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled"}}}} }'
-    kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/dport":"'${INGRESS_PORT}'"}}}} }'
+    kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} \
+      -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled", "codesealer.com/dport":"'${INGRESS_PORT}'"}}}} }'
 
     echo "########################################################################################"
     echo "#  Restart NGINX Ingress Controller - only necessary if the patch did not trigger the"
@@ -287,7 +317,7 @@ elif [[ "$1" == "upgrade" ]]; then
 
   read -r -p 'Which installation mode for Codesealer [hybrid/enterprise]: '
   echo "########################################################################################"
-  echo "#  Upgrade Codesealer Release"
+  echo "#  Upgrading Codesealer Release"
   echo "########################################################################################"
   if [[ "${REPLY}" == "hybrid" ]]; then
     helm upgrade codesealer ${CODESEALER_HELM_CHART} --namespace codesealer-system \
@@ -300,9 +330,20 @@ elif [[ "$1" == "upgrade" ]]; then
       --wait --timeout=90s
 
     echo "########################################################################################"
-    echo "#  Upgrade Codesealer"
+    echo "#  Activate Codesealer by applying labels and annotations:"
+    echo "# "
+    echo "# $ kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled"
+    echo "# "
+    echo "# $ kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} \ "
+    echo "#   -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled", "codesealer.com/dport":"'${INGRESS_PORT}'"}}}} }'"
+    echo "# "
     echo "########################################################################################"
     read -r -s -p 'Press any key to continue.'
+
+    kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled
+    kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} \
+      -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled", "codesealer.com/dport":"'${INGRESS_PORT}'"}}}} }'
+
     kubectl rollout restart deployments --namespace codesealer-system
     echo "########################################################################################"
     echo "#  Waiting for Codesealer to restart"
