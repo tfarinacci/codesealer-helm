@@ -172,6 +172,13 @@ if [[ "$1" == "install" ]]; then
         --set "ingress.tls[0].hosts[0]=localhost,ingress.tls[0].secretName=" \
         --set ingress.pathType=Prefix \
         --wait --timeout=60s
+
+      echo "########################################################################################"
+      echo "#  To access Juice Shop application:"
+      echo "#  "
+      echo "#  $ kubectl port forward service/ingress-nginx-controller -n ${INGRESS_NAMESPACE} <nodeport>"
+      echo "########################################################################################"
+
     else
       echo "########################################################################################"
       echo "#  Skipping Juice Shop installation"
