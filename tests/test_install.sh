@@ -68,6 +68,10 @@ if [[ "$1" == "install" ]]; then
       --set controller.service.type=NodePort \
       --wait --timeout=60s
 
+    # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error with Kind Cluster
+    CA=$(kubectl -n ingress-nginx get secret ingress-nginx-admission -ojsonpath='{.data.ca}')
+    kubectl patch validatingwebhookconfigurations ingress-nginx-admission --type='json' -p='[{"op": "add", "path": "/webhooks/0/clientConfig/caBundle", "value":"'$CA'"}]'  
+
     else
       echo "########################################################################################"
       echo "#  Skipping NGINX Ingress Controller installation"
@@ -91,6 +95,10 @@ if [[ "$1" == "install" ]]; then
       helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
       --namespace ${INGRESS_NAMESPACE} --create-namespace \
       --wait --timeout=60s
+
+    # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error with Kind Cluster
+    CA=$(kubectl -n ingress-nginx get secret ingress-nginx-admission -ojsonpath='{.data.ca}')
+    kubectl patch validatingwebhookconfigurations ingress-nginx-admission --type='json' -p='[{"op": "add", "path": "/webhooks/0/clientConfig/caBundle", "value":"'$CA'"}]'  
 
     else
       echo "########################################################################################"
