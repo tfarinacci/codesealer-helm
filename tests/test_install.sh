@@ -47,7 +47,7 @@ if [[ "$1" == "install" ]]; then
   echo "########################################################################################"
   read -r -p 'Which Kubernetes distribution are you using? [Docker/Kind/Minikube]: '
 
-  if [[ "${REPLY}" == "[Kk][Ii][Nn][Dd]" ]]; then
+  if [[ "${REPLY}" == [Kk][Ii][Nn][Dd] ]]; then
 
     echo "########################################################################################"
     echo "#  Do you wish to install NGINX Ingress Controller on a Kind Cluster"
