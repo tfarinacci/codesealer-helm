@@ -65,7 +65,7 @@ if [[ "$1" == "install" ]]; then
       --namespace ${INGRESS_NAMESPACE} --create-namespace \
       --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
       --set controller.hostPort.enabled=true \
-      --set controller.service.type=NodePort \
+      # --set controller.service.type=NodePort \
       --wait --timeout=60s
 
     # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error
@@ -94,6 +94,8 @@ if [[ "$1" == "install" ]]; then
       # Other Cluster configuration
       helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
       --namespace ${INGRESS_NAMESPACE} --create-namespace \
+      --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
+      --set controller.hostPort.enabled=true \
       --wait --timeout=60s
 
     # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error
