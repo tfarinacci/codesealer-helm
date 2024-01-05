@@ -283,8 +283,14 @@ if [[ "$1" == "install" ]]; then
     read -r -p 'Restart Ingress Controller? [y/n]: '
     if [[ "${REPLY}" == 'y' ]]; then
 
-      if [[ "${CODESEALER_ENV}" == "PROD" ]]; then
-
+      if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
+        # Use scale deployment instead
+        kubectl scale deployment ${INGRESS_DEPLOYMENT}  --namespace=${INGRESS_NAMESPACE} --replicas=0
+        sleep 20
+        echo "########################################################################################"
+        echo "#  Waiting for NGINX Ingress Controller to restart"
+        echo "########################################################################################"  
+        kubectl scale deployment ${INGRESS_DEPLOYMENT}  --namespace=${INGRESS_NAMESPACE} --replicas=1
       else
         kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
         echo "########################################################################################"
