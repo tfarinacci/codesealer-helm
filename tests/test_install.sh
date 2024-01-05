@@ -36,7 +36,7 @@ export INGRESS_DEPLOYMENT=ingress-nginx-controller
 
 # Installation specific  exports
 export INGRESS_NAMESPACE=ingress-nginx
-export INGRESS_PORT=443
+export INGRESS_PORT=31999
 export REDIS_NAMESPACE=redis
 export CODESEALER_CNI=false
 
@@ -66,6 +66,7 @@ if [[ "$1" == "install" ]]; then
       --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
       --set controller.hostPort.enabled=true \
       --set controller.service.type=NodePort \
+      --set controller.service.nodePorts.https=31999 \
       --wait --timeout=60s
 
     # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error
@@ -94,7 +95,6 @@ if [[ "$1" == "install" ]]; then
       # Other Cluster configuration
       helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
       --namespace ${INGRESS_NAMESPACE} --create-namespace \
-      --set controller.service.type=NodePort \
       --wait --timeout=60s
 
     # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error
