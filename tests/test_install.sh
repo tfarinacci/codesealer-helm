@@ -29,6 +29,9 @@ clear
 export CODESEALER_HELM_REPO=https://raw.githubusercontent.com/tfarinacci/codesealer-helm/main/
 export CODESEALER_HELM_CHART=codesealer/codesealer
 
+export CODESEALER_HELM_CNI_REPO=https://raw.githubusercontent.com/tfarinacci/codesealer-cni/main/
+export CODESEALER_HELM_CHART_CNI=codesealer-cni/codesealer-cni
+
 # NGINX Ingress Controller Helm Repo
 export INGRESS_HELM_REPO=https://kubernetes.github.io/ingress-nginx
 export INGRESS_HELM_CHART=ingress-nginx
@@ -55,8 +58,8 @@ if [[ "$1" == "install" ]]; then
   echo "#  "
   echo "#  If you do not have an Ingress Controller installed NGINX Ingress will be installed by default"
   echo "#  "
-  echo "#  This installation also will configure your Ingress Controller to operate in one the following"
-  echo "#  2 modes:"
+  echo "#  This installation also will configure your Ingress Controller to operate in one the "
+  echo "#  following 2 Kubernetes Ingress Controller service types:"
   echo "#  "
   echo "#     1. NodePort - DEVELOP (default)"
   echo "#        Use for local installations that do not support a LoadBalancer configuration."
@@ -107,16 +110,16 @@ if [[ "$1" == "install" ]]; then
     echo "#  "
     echo "#  Documentation: https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx"
     echo "########################################################################################"
-    read -r -p 'Which port do you want NGINX Ingress Controller to use: ["'${INGRESS_PORT}'"] '
+    read -r -p "Which port do you want NGINX Ingress Controller to use: [${INGRESS_PORT}] "
     if [ -z "${REPLY}" ]; then
       # Set Ingress Controller port
-      INGRESS_PORT=${INGRESS_PORT}
+      echo "Using default NodePort: ${INGRESS_PORT}"
     else
       # Set Ingress Controller port
       INGRESS_PORT=${REPLY}
     fi
 
-    read -r -p 'Install NGINX Ingress Controller using a NodePort on port "'${INGRESS_PORT}'" [y/n]: '
+    read -r -p "Install NGINX Ingress Controller using a NodePort on port ${INGRESS_PORT} [y/n]: "
     if [[ "${REPLY}" == 'y' ]]; then
 
       echo "########################################################################################"
@@ -138,8 +141,15 @@ if [[ "$1" == "install" ]]; then
 
     else
       echo "########################################################################################"
-      echo "#  Skipping NGINX Development Ingress Controller installation"
+      echo "#  Skipping NGINX Development Ingress Controller installation - enter Ingress Controller"
+      echo "#  configuration:"
       echo "########################################################################################"
+      read -r -p 'Ingress Controller Namespace?: '
+      export INGRESS_NAMESPACE="${REPLY}"
+      read -r -p 'Ingress Controller Deployment?: '
+      export INGRESS_DEPLOYMENT="${REPLY}"
+      read -r -p 'Ingress Controller Port?: '
+      export INGRESS_PORT="${REPLY}"
     fi
 
   fi
@@ -164,10 +174,18 @@ if [[ "$1" == "install" ]]; then
     --set auth.enabled=true \
     --set replica.replicaCount=1 \
     --wait --timeout=60s
+
+    # Get the Redis password from the prior installation
+    export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis -o jsonpath="{.data.redis-password}" | base64 -d)
+
   else
     echo "########################################################################################"
-    echo "# Skipping Redis installation"
+    echo "# Skipping Redis installation - enter Redis configuration"
     echo "########################################################################################"
+    read -r -p 'Redis Namespace?: '
+    export REDIS_NAMESPACE="${REPLY}"
+    read -r -p 'Redis Password?: '
+    export REDIS_PASSWORD="${REPLY}"
   fi
 
   echo "########################################################################################"
@@ -178,14 +196,47 @@ if [[ "$1" == "install" ]]; then
   # Install Codesealer helm repo
   helm repo add codesealer ${CODESEALER_HELM_REPO}
 
-  # Get the Redis password
-  export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis -o jsonpath="{.data.redis-password}" | base64 -d)
-  read -r -p 'Which installation mode for Codesealer [hybrid/enterprise]: '
+  echo "########################################################################################"
+  echo "# Codesealer installation options:"
+  echo "#  "
+  echo "#  hybrid (default) - installs Codesealer as a sidecar to an Ingress Controller or service on Kubernetes"
+  echo "#  "
+  echo "#  enterprise - installs Codesealer as a standalone reverse proxy layer in front of an application"
+  echo "#  "
+  echo "########################################################################################"
+  read -r -p 'Which installation mode for Codesealer? [hybrid/enterprise]: '
 
   # Check if they want the sample application for testing
-  if [[ "${REPLY}" == "hybrid" ]]; then
+  if [[ "${REPLY}" == "enterprise" ]]; then
 
+    echo "########################################################################################"
+    echo "#  How many Codesealer workers do you want to install?"
+    echo "########################################################################################"
+    read -r -p 'Number of Codesealer workers?: '
+    if [ -z "${REPLY}" ]; then
+      # Set the number of Codesealer workers to 1 
+      CODESEALER_WORKERS=1
+    else
+      # Set the number of Codesealer workers from the input
+      CODESEALER_WORKERS=${REPLY}
+    fi
+
+    # Start Codesealer in `enterprise` mode
+    helm install codesealer ${CODESEALER_HELM_CHART} \
+      --create-namespace --namespace codesealer-system \
+      --set codesealerToken="${CODESEALER_TOKEN}" \
+      --set worker.ingress.namespace="${INGRESS_NAMESPACE}" \
+      --set worker.ingress.deployment="${INGRESS_DEPLOYMENT}" \
+      --set worker.ingress.port="${INGRESS_PORT}" \
+      --set worker.redis.namespace="${REDIS_NAMESPACE}" \
+      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+      --set environment="${CODESEALER_ENV}" \
+      --set worker.replicaCount="${CODESEALER_WORKERS}" \
+      --set manager.enabled=true \
+      --wait --timeout=60s
     export CODESEALER_MODE=${REPLY}
+
+  else
 
     echo "########################################################################################"
     echo "#  Install OWASP Juice Shop Application"
@@ -211,7 +262,7 @@ if [[ "$1" == "install" ]]; then
       echo "########################################################################################"
       echo "#  To access Juice Shop application:"
       echo "#  "
-      echo "#  $ kubectl port forward service/ingress-nginx-controller -n ${INGRESS_NAMESPACE} <nodeport>"
+      echo "#  https://localhost:${INGRESS_PORT}"
       echo "########################################################################################"
 
     else
@@ -232,33 +283,33 @@ if [[ "$1" == "install" ]]; then
       helm install codesealer ${CODESEALER_HELM_CHART} \
         --create-namespace --namespace codesealer-system \
         --set codesealerToken="${CODESEALER_TOKEN}" \
-        --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-        --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
-        --set worker.ingress.port=${INGRESS_PORT} \
-        --set worker.redis.namespace=${REDIS_NAMESPACE} \
+        --set worker.ingress.namespace="${INGRESS_NAMESPACE}" \
+        --set worker.ingress.deployment="${INGRESS_DEPLOYMENT}" \
+        --set worker.ingress.port="${INGRESS_PORT}" \
+        --set worker.redis.namespace="${REDIS_NAMESPACE}" \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
         --set initContainers.enabled=false \
-        --set environment=${CODESEALER_ENV} \
-        --wait --timeout=90s
+        --set environment="${CODESEALER_ENV}" \
+        --wait --timeout=60s
 
       echo "########################################################################################"
       echo "#  Installing Codesealer CNI"
       echo "########################################################################################"
-      helm repo add codesealer-cni https://raw.githubusercontent.com/tfarinacci/codesealer-cni/main/
-      helm install codesealer-cni codesealer-cni/codesealer-cni --namespace kube-system
+      helm repo add codesealer-cni ${CODESEALER_HELM_CNI_REPO}
+      helm install codesealer-cni ${CODESEALER_HELM_CHART_CNI} --namespace kube-system
 
     else
       # Use Codesealer init-container to pre-route traffic
       helm install codesealer ${CODESEALER_HELM_CHART} \
         --create-namespace --namespace codesealer-system \
         --set codesealerToken="${CODESEALER_TOKEN}" \
-        --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-        --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
-        --set worker.ingress.port=${INGRESS_PORT} \
-        --set worker.redis.namespace=${REDIS_NAMESPACE} \
+        --set worker.ingress.namespace="${INGRESS_NAMESPACE}" \
+        --set worker.ingress.deployment="${INGRESS_DEPLOYMENT}" \
+        --set worker.ingress.port="${INGRESS_PORT}" \
+        --set worker.redis.namespace="${REDIS_NAMESPACE}" \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-        --set environment=${CODESEALER_ENV} \
-        --wait --timeout=90s
+        --set environment="${CODESEALER_ENV}" \
+        --wait --timeout=60s
     fi
 
     echo "########################################################################################"
@@ -272,8 +323,8 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
     read -r -s -p 'Press any key to continue.'
 
-    kubectl label ns ${INGRESS_NAMESPACE} codesealer.com/webhook=enabled
-    kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} \
+    kubectl label ns "${INGRESS_NAMESPACE}" codesealer.com/webhook=enabled
+    kubectl patch deployment "${INGRESS_DEPLOYMENT}" -n "${INGRESS_NAMESPACE}" \
       -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled", "codesealer.com/dport":"'${INGRESS_PORT}'"}}}} }'
 
     echo "########################################################################################"
@@ -285,46 +336,27 @@ if [[ "$1" == "install" ]]; then
 
       if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
         # Use scale deployment instead
-        kubectl scale deployment ${INGRESS_DEPLOYMENT}  --namespace=${INGRESS_NAMESPACE} --replicas=0
+        kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=0
         sleep 20
         echo "########################################################################################"
         echo "#  Waiting for NGINX Ingress Controller to restart"
         echo "########################################################################################"  
-        kubectl scale deployment ${INGRESS_DEPLOYMENT}  --namespace=${INGRESS_NAMESPACE} --replicas=1
+        kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=1
       else
-        kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
+        kubectl rollout restart deployment/"${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}"
         echo "########################################################################################"
         echo "#  Waiting for NGINX Ingress Controller to restart"
         echo "########################################################################################"  
-        kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
+        kubectl rollout status deployment/"${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --watch
       fi
 
     else
       echo "########################################################################################"
       echo "#  Skipping Ingress Controller Restart"
       echo "########################################################################################"
-      kubectl get pods --namespace ${INGRESS_NAMESPACE}
+      kubectl get pods --namespace "${INGRESS_NAMESPACE}"
     fi
 
-  elif [[ "${REPLY}" == "enterprise" ]]; then
-    # Start Codesealer in `enterprise` mode
-    helm install codesealer ${CODESEALER_HELM_CHART} \
-      --create-namespace --namespace codesealer-system \
-      --set codesealerToken="${CODESEALER_TOKEN}" \
-      --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-      --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
-      --set worker.ingress.port=${INGRESS_PORT} \
-      --set worker.redis.namespace=${REDIS_NAMESPACE} \
-      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --set environment=${CODESEALER_ENV} \
-      --set manager.enabled=true \
-      --wait --timeout=90s
-  else
-    echo "####################################################################################################################"
-    echo "#  Invalid arguement!"
-    echo "#  Must specify: [hybrid | enterprise]"
-    echo "####################################################################################################################"
-    exit 1
   fi
 
 elif [[ "$1" == "uninstall" ]]; then
@@ -381,19 +413,82 @@ elif [[ "$1" == "upgrade" ]]; then
   export REDIS_PASSWORD=$(kubectl get secret --namespace ${REDIS_NAMESPACE} redis -o jsonpath="{.data.redis-password}" | base64 -d)
   helm repo update codesealer
 
-  read -r -p 'Which installation mode for Codesealer [hybrid/enterprise]: '
   echo "########################################################################################"
   echo "#  Upgrading Codesealer Release"
   echo "########################################################################################"
-  if [[ "${REPLY}" == "hybrid" ]]; then
-    helm upgrade codesealer ${CODESEALER_HELM_CHART} --namespace codesealer-system \
+  read -r -p 'Which installation mode for Codesealer [hybrid/enterprise]: '
+  # Check if they want the sample application for testing
+  if [[ "${REPLY}" == "enterprise" ]]; then
+
+    echo "########################################################################################"
+    echo "#  How many Codesealer workers do you want to install?"
+    echo "########################################################################################"
+    read -r -p 'Number of Codesealer workers?: '
+    if [ -z "${REPLY}" ]; then
+      # Set the number of Codesealer workers to 1 
+      CODESEALER_WORKERS=1
+    else
+      # Set the number of Codesealer workers from the input
+      CODESEALER_WORKERS=${REPLY}
+    fi
+
+    # Start Codesealer in `enterprise` mode
+    helm upgrade codesealer ${CODESEALER_HELM_CHART} \
+      --create-namespace --namespace codesealer-system \
       --set codesealerToken="${CODESEALER_TOKEN}" \
-      --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-      --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
-      --set worker.ingress.port=${INGRESS_PORT} \
-      --set worker.redis.namespace=${REDIS_NAMESPACE} \
+      --set worker.ingress.namespace="${INGRESS_NAMESPACE}" \
+      --set worker.ingress.deployment="${INGRESS_DEPLOYMENT}" \
+      --set worker.ingress.port="${INGRESS_PORT}" \
+      --set worker.redis.namespace="${REDIS_NAMESPACE}" \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --wait --timeout=90s
+      --set environment="${CODESEALER_ENV}" \
+      --set worker.replicaCount="${CODESEALER_WORKERS}" \
+      --set manager.enabled=true \
+      --wait --timeout=60s
+    export CODESEALER_MODE=${REPLY}
+
+  else
+
+    echo "########################################################################################"
+    echo "# Redis password: ${REDIS_PASSWORD}"
+    echo "# "
+    echo "# Waiting for Codesealer to start in ${CODESEALER_MODE} mode"
+    echo "########################################################################################"
+
+    # Start Codesealer in `hybrid` mode
+    if [[ ${CODESEALER_CNI} == true ]]; then
+      # Use Codesealer CNI to pre-route traffic
+      helm upgrade codesealer ${CODESEALER_HELM_CHART} \
+        --namespace codesealer-system \
+        --set codesealerToken="${CODESEALER_TOKEN}" \
+        --set worker.ingress.namespace="${INGRESS_NAMESPACE}" \
+        --set worker.ingress.deployment="${INGRESS_DEPLOYMENT}" \
+        --set worker.ingress.port="${INGRESS_PORT}" \
+        --set worker.redis.namespace="${REDIS_NAMESPACE}" \
+        --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+        --set initContainers.enabled=false \
+        --set environment="${CODESEALER_ENV}" \
+        --wait --timeout=60s
+
+      echo "########################################################################################"
+      echo "#  Installing Codesealer CNI"
+      echo "########################################################################################"
+      helm repo add codesealer-cni ${CODESEALER_HELM_CNI_REPO}
+      helm install codesealer-cni ${CODESEALER_HELM_CHART_CNI} --namespace kube-system
+
+    else
+      # Use Codesealer init-container to pre-route traffic
+      helm upgrade codesealer ${CODESEALER_HELM_CHART} \
+        --namespace codesealer-system \
+        --set codesealerToken="${CODESEALER_TOKEN}" \
+        --set worker.ingress.namespace="${INGRESS_NAMESPACE}" \
+        --set worker.ingress.deployment="${INGRESS_DEPLOYMENT}" \
+        --set worker.ingress.port="${INGRESS_PORT}" \
+        --set worker.redis.namespace="${REDIS_NAMESPACE}" \
+        --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+        --set environment="${CODESEALER_ENV}" \
+        --wait --timeout=60s
+    fi
 
     echo "########################################################################################"
     echo "#  Activate Codesealer by applying labels and annotations:"
@@ -410,39 +505,36 @@ elif [[ "$1" == "upgrade" ]]; then
     kubectl patch deployment ${INGRESS_DEPLOYMENT} -n ${INGRESS_NAMESPACE} \
       -p '{"spec": {"template":{"metadata":{"annotations":{"codesealer.com/injection":"enabled", "codesealer.com/dport":"'${INGRESS_PORT}'"}}}} }'
 
-    kubectl rollout restart deployments --namespace codesealer-system
     echo "########################################################################################"
-    echo "#  Waiting for Codesealer to restart"
-    echo "########################################################################################"  
-    kubectl rollout status deployments --namespace codesealer-system --watch
+    echo "#  Restart NGINX Ingress Controller - only necessary if the patch did not trigger the"
+    echo "#  restart"
+    echo "########################################################################################"
+    read -r -p 'Restart Ingress Controller? [y/n]: '
+    if [[ "${REPLY}" == 'y' ]]; then
 
-    echo "########################################################################################"
-    echo "#  Upgrade Codesealer Worker Sidecar for NGINX Ingress Controller"
-    echo "########################################################################################"
-    read -r -s -p 'Press any key to continue.'
+      if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
+        # Use scale deployment instead
+        kubectl scale deployment ${INGRESS_DEPLOYMENT}  --namespace ${INGRESS_NAMESPACE} --replicas=0
+        sleep 20
+        echo "########################################################################################"
+        echo "#  Waiting for NGINX Ingress Controller to restart"
+        echo "########################################################################################"  
+        kubectl scale deployment ${INGRESS_DEPLOYMENT}  --namespace ${INGRESS_NAMESPACE} --replicas=1
+      else
+        kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
+        echo "########################################################################################"
+        echo "#  Waiting for NGINX Ingress Controller to restart"
+        echo "########################################################################################"  
+        kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
+      fi
 
-    kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
-    echo "########################################################################################"
-    echo "#  Waiting for NGINX Ingress Controller to restart"
-    echo "########################################################################################"  
-    kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
+    else
+      echo "########################################################################################"
+      echo "#  Skipping Ingress Controller Restart"
+      echo "########################################################################################"
+      kubectl get pods --namespace ${INGRESS_NAMESPACE}
+    fi
 
-  elif [[ "${REPLY}" == "enterprise" ]]; then
-    helm upgrade codesealer ${CODESEALER_HELM_CHART} --namespace codesealer-system \
-      --set codesealerToken="${CODESEALER_TOKEN}" \
-      --set worker.ingress.namespace=${INGRESS_NAMESPACE} \
-      --set worker.ingress.deployment=${INGRESS_DEPLOYMENT} \
-      --set worker.ingress.port=${INGRESS_PORT} \
-      --set worker.redis.namespace=${REDIS_NAMESPACE} \
-      --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --set manager.enabled=true \
-      --wait --timeout=90s
-  else
-    echo "####################################################################################################################"
-    echo "#  Invalid arguement!"
-    echo "#  Must specify: [hybrid | enterprise]"
-    echo "####################################################################################################################"
-    exit 1
   fi
 
 else

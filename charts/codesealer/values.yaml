@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 image:
-  repository: docker.pkg.github.com/org/code-sealer/packages
+  repository: ghcr.io/code-sealer
   pullPolicy: Always
 
 imagePullSecrets:
@@ -170,7 +170,7 @@ admission:
 worker:
   name: codesealer-core
   replicaCount: 1
-  image: codesealer-core-modsec
+  image: release/codesealer-core-modsec
   tag: master
 
   # Ingress Controller intercept parameters
@@ -827,7 +827,7 @@ manager:
   name: core-manager
   replicaCount: 1
   restartPolicy: Always
-  image: core-manager
+  image: release/core-manager
   tag: master
 
   service:
