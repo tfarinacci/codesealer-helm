@@ -339,10 +339,12 @@ if [[ "$1" == "install" ]]; then
 
       if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
         # Use force delete instead
+        kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=0
         POD=$(kubectl get pods -n ${INGRESS_NAMESPACE} | grep controller | cut -d " " -f1)
         echo "Deleting pod: ${POD} in namespace ${INGRESS_NAMESPACE}"
         kubectl delete pod "${POD}" --namespace "${INGRESS_NAMESPACE}" --force
         sleep 10
+        kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=1
         kubectl get pods --namespace "${INGRESS_NAMESPACE}"
       else
         kubectl rollout restart deployment/"${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}"
@@ -403,9 +405,7 @@ elif [[ "$1" == "uninstall" ]]; then
   if [ "${REPLY}" == 'y' ]; then
     helm uninstall ${INGRESS_HELM_CHART} --namespace ${INGRESS_NAMESPACE}
     helm repo remove ${INGRESS_HELM_CHART}
-    kubectl delete namespace ${INGRESS_NAMESPACE}
-    # Delete the namespace if its not terminating
-    kubectl get namespace ${INGRESS_NAMESPACE} -o json | tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/" | kubectl replace --raw /api/v1/namespaces/${INGRESS_NAMESPACE}/finalize -f -
+    kubectl delete namespace ${INGRESS_NAMESPACE} --force --grace-period=0
   else
     echo "########################################################################################"
     echo "#  Skipping NGINX Ingress Controller uninstall"
@@ -521,10 +521,12 @@ elif [[ "$1" == "upgrade" ]]; then
 
       if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
         # Use force delete instead
+        kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=0
         POD=$(kubectl get pods -n ${INGRESS_NAMESPACE} | grep controller | cut -d " " -f1)
         echo "Deleting pod: ${POD} in namespace ${INGRESS_NAMESPACE}"
         kubectl delete pod "${POD}" --namespace "${INGRESS_NAMESPACE}" --force
         sleep 10
+        kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=1
         kubectl get pods --namespace "${INGRESS_NAMESPACE}"
       else
         kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
