@@ -209,6 +209,8 @@ if [[ "$1" == "install" ]]; then
   # Check if they want the sample application for testing
   if [[ "${REPLY}" == "enterprise" ]]; then
 
+    export CODESEALER_MODE=${REPLY}
+
     echo "########################################################################################"
     echo "#  How many Codesealer workers do you want to install?"
     echo "########################################################################################"
@@ -234,9 +236,10 @@ if [[ "$1" == "install" ]]; then
       --set worker.replicaCount="${CODESEALER_WORKERS}" \
       --set manager.enabled=true \
       --wait --timeout=60s
-    export CODESEALER_MODE=${REPLY}
 
   else
+
+    export CODESEALER_MODE="hybrid"
 
     echo "########################################################################################"
     echo "#  Install OWASP Juice Shop Application"
@@ -421,6 +424,8 @@ elif [[ "$1" == "upgrade" ]]; then
   # Check if they want the sample application for testing
   if [[ "${REPLY}" == "enterprise" ]]; then
 
+    export CODESEALER_MODE="${REPLY}"
+
     echo "########################################################################################"
     echo "#  How many Codesealer workers do you want to install?"
     echo "########################################################################################"
@@ -446,9 +451,10 @@ elif [[ "$1" == "upgrade" ]]; then
       --set worker.replicaCount="${CODESEALER_WORKERS}" \
       --set manager.enabled=true \
       --wait --timeout=60s
-    export CODESEALER_MODE=${REPLY}
 
   else
+
+    export CODESEALER_MODE="hybrid"
 
     echo "########################################################################################"
     echo "# Redis password: ${REDIS_PASSWORD}"
