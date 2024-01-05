@@ -131,7 +131,7 @@ if [[ "$1" == "install" ]]; then
       --namespace ${INGRESS_NAMESPACE} --create-namespace \
       --set controller.hostPort.enabled=true \
       --set controller.service.type=NodePort \
-      --set controller.service.nodePorts.https=31999 \
+      --set controller.service.nodePorts.https=${INGRESS_PORT} \
       --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
       --wait --timeout=60s
 
