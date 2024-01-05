@@ -171,7 +171,7 @@ worker:
   name: codesealer-core
   replicaCount: 1
   image: release/codesealer-core-modsec
-  tag: master
+  tag: latest
 
   # Ingress Controller intercept parameters
   ingress:

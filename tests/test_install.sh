@@ -335,13 +335,11 @@ if [[ "$1" == "install" ]]; then
     if [[ "${REPLY}" == 'y' ]]; then
 
       if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
-        # Use scale deployment instead
-        kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=0
-        sleep 20
-        echo "########################################################################################"
-        echo "#  Waiting for NGINX Ingress Controller to restart"
-        echo "########################################################################################"  
-        kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=1
+        # Use scale force delete instead
+        POD=$(kubectl get pods -n ingress-nginx | grep controller | cut -d " " -f1)
+        kubectl delete pod "${POD}" --namespace "${INGRESS_NAMESPACE}" --force
+        sleep 5
+        kubectl get pods --namespace "${INGRESS_NAMESPACE}"
       else
         kubectl rollout restart deployment/"${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}"
         echo "########################################################################################"
@@ -513,13 +511,11 @@ elif [[ "$1" == "upgrade" ]]; then
     if [[ "${REPLY}" == 'y' ]]; then
 
       if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
-        # Use scale deployment instead
-        kubectl scale deployment ${INGRESS_DEPLOYMENT}  --namespace ${INGRESS_NAMESPACE} --replicas=0
-        sleep 20
-        echo "########################################################################################"
-        echo "#  Waiting for NGINX Ingress Controller to restart"
-        echo "########################################################################################"  
-        kubectl scale deployment ${INGRESS_DEPLOYMENT}  --namespace ${INGRESS_NAMESPACE} --replicas=1
+        # Use scale force delete instead
+        POD=$(kubectl get pods -n ingress-nginx | grep controller | cut -d " " -f1)
+        kubectl delete pod "${POD}" --namespace "${INGRESS_NAMESPACE}" --force
+        sleep 5
+        kubectl get pods --namespace "${INGRESS_NAMESPACE}"
       else
         kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
         echo "########################################################################################"
