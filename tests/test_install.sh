@@ -70,7 +70,7 @@ if [[ "$1" == "install" ]]; then
   echo "#        Kubernetes support this configuration."
   echo "#  "
   echo "########################################################################################"
-  read -r -p 'Which Ingress Controller configuration? [PROD/DEVELOP]: '
+  read -r -p 'Which Ingress Controller configuration? [DEVELOP/PROD]: '
   if [[ "${REPLY}" == [Pp][Rr][Oo][Dd] ]]; then
 
     # Set environment
@@ -335,10 +335,11 @@ if [[ "$1" == "install" ]]; then
     if [[ "${REPLY}" == 'y' ]]; then
 
       if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
-        # Use scale force delete instead
-        POD=$(kubectl get pods -n ingress-nginx | grep controller | cut -d " " -f1)
+        # Use force delete instead
+        POD=$(kubectl get pods -n ${INGRESS_NAMESPACE} | grep controller | cut -d " " -f1)
+        echo "Deleting pod: ${POD} in namespace ${INGRESS_NAMESPACE}"
         kubectl delete pod "${POD}" --namespace "${INGRESS_NAMESPACE}" --force
-        sleep 5
+        sleep 10
         kubectl get pods --namespace "${INGRESS_NAMESPACE}"
       else
         kubectl rollout restart deployment/"${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}"
@@ -400,6 +401,8 @@ elif [[ "$1" == "uninstall" ]]; then
     helm uninstall ${INGRESS_HELM_CHART} --namespace ${INGRESS_NAMESPACE}
     helm repo remove ${INGRESS_HELM_CHART}
     kubectl delete namespace ${INGRESS_NAMESPACE}
+    # Delete the namespace if its not terminating
+    kubectl get namespace ${INGRESS_NAMESPACE} -o json | tr -d "\n" | sed "s/\"finalizers\": \[[^]]\+\]/\"finalizers\": []/" | kubectl replace --raw /api/v1/namespaces/${INGRESS_NAMESPACE}/finalize -f -
   else
     echo "########################################################################################"
     echo "#  Skipping NGINX Ingress Controller uninstall"
@@ -511,10 +514,11 @@ elif [[ "$1" == "upgrade" ]]; then
     if [[ "${REPLY}" == 'y' ]]; then
 
       if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
-        # Use scale force delete instead
-        POD=$(kubectl get pods -n ingress-nginx | grep controller | cut -d " " -f1)
+        # Use force delete instead
+        POD=$(kubectl get pods -n ${INGRESS_NAMESPACE} | grep controller | cut -d " " -f1)
+        echo "Deleting pod: ${POD} in namespace ${INGRESS_NAMESPACE}"
         kubectl delete pod "${POD}" --namespace "${INGRESS_NAMESPACE}" --force
-        sleep 5
+        sleep 10
         kubectl get pods --namespace "${INGRESS_NAMESPACE}"
       else
         kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
