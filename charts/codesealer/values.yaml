@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 image:
-  repository: ghcr.io/code-sealer
+  repository: github.com/orgs/code-sealer/packages
   pullPolicy: Always
 
 imagePullSecrets:
@@ -29,6 +29,9 @@ initContainers:
   name: codesealer-init-networking
   image: codesealer-init-networking
   tag: latest
+
+# Deplopyment configuration [PROD/DEVELOP]
+environment: DEVELOP
 
 webhook:
   name: codesealer-mutating-webhook

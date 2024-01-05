@@ -32,62 +32,93 @@ export CODESEALER_HELM_CHART=codesealer/codesealer
 # NGINX Ingress Controller Helm Repo
 export INGRESS_HELM_REPO=https://kubernetes.github.io/ingress-nginx
 export INGRESS_HELM_CHART=ingress-nginx
-export INGRESS_DEPLOYMENT=ingress-nginx-controller
 
 # Installation specific  exports
 export INGRESS_NAMESPACE=ingress-nginx
-export INGRESS_PORT=31999
+export INGRESS_DEPLOYMENT=ingress-nginx-controller
 export REDIS_NAMESPACE=redis
-export CODESEALER_CNI=false
+
+# Default settings
+INGRESS_PORT=31443
+CODESEALER_CNI=false
+
 
 if [[ "$1" == "install" ]]; then
   # Check which Kubernetes distribution is installed
   echo "########################################################################################"
-  echo "#  Installing Codesealer"
+  echo "#  Codesealer installation script"
+  echo "#  "
+  echo "#  This script installs Codesealer in one of two possible configurations:"
+  echo "#  "
+  echo "#     1. As a sidecar to an Ingress Controller for Cloud Native workloads (hybrid)"
+  echo "#     2. As Reverse Proxy Layer in front of an Ingress Controller or API Gateway (enterprise)"
+  echo "#  "
+  echo "#  If you do not have an Ingress Controller installed NGINX Ingress will be installed by default"
+  echo "#  "
+  echo "#  This installation also will configure your Ingress Controller to operate in one the following"
+  echo "#  2 modes:"
+  echo "#  "
+  echo "#     1. NodePort - DEVELOP (default)"
+  echo "#        Use for local installations that do not support a LoadBalancer configuration."
+  echo "#        This is the default installation mode."
+  echo "#     2. LoadBalancer - PROD"
+  echo "#        Use on Production implementations or local configurations that support routing"
+  echo "#        to local LoadBalancer over port 443.  Some MacBooks using Docker Desktop with"
+  echo "#        Kubernetes support this configuration."
+  echo "#  "
   echo "########################################################################################"
-  read -r -p 'Which Kubernetes distribution are you using? [Docker/Kind/Minikube]: '
+  read -r -p 'Which Ingress Controller configuration? [PROD/DEVELOP]: '
+  if [[ "${REPLY}" == [Pp][Rr][Oo][Dd] ]]; then
 
-  if [[ "${REPLY}" == [Kk][Ii][Nn][Dd] ]]; then
-
+    # Set environment
+    CODESEALER_ENV=PROD
+  
     echo "########################################################################################"
-    echo "#  Do you wish to install NGINX Ingress Controller on a Kind Cluster"
+    echo "#  Do you wish to install NGINX Ingress Controller using a LoadBalancer configuration?"
     echo "#  "
     echo "#  Documentation: https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx"
     echo "########################################################################################"
-    read -r -p 'Install NGINX Ingress Controller [y/n]: '
+    read -r -p 'Install NGINX Ingress Controller on port 443? [y/n]: '
     if [[ "${REPLY}" == 'y' ]]; then
       echo "########################################################################################"
       echo "#  Waiting for NGINX Ingress Controller to start"
       echo "########################################################################################" 
       helm repo add ${INGRESS_HELM_CHART} ${INGRESS_HELM_REPO}
-      # Kind Cluster configuration
       helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
       --namespace ${INGRESS_NAMESPACE} --create-namespace \
-      --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
-      --set controller.hostPort.enabled=true \
-      --set controller.service.type=NodePort \
-      --set controller.service.nodePorts.https=31999 \
       --wait --timeout=60s
-
-    # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error
-    CA=$(kubectl -n ${INGRESS_NAMESPACE} get secret ingress-nginx-admission -ojsonpath='{.data.ca}')
-    kubectl patch validatingwebhookconfigurations ingress-nginx-admission --type='json' -p='[{"op": "add", "path": "/webhooks/0/clientConfig/caBundle", "value":"'$CA'"}]'  
 
     else
       echo "########################################################################################"
-      echo "#  Skipping NGINX Ingress Controller installation"
+      echo "#  Skipping NGINX Production Ingress Controller installation"
       echo "########################################################################################"
     fi
 
+    # Set Ingress Controller port
+    INGRESS_PORT=443
+
   else
 
+    # Set environment
+    CODESEALER_ENV=DEVELOP
+
     echo "########################################################################################"
-    echo "#  Do you wish to install NGINX Ingress Controller"
+    echo "#  Configuring NGINX Ingress Controller using a NodePort configuration?"
     echo "#  "
     echo "#  Documentation: https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx"
     echo "########################################################################################"
-    read -r -p 'Install NGINX Ingress Controller [y/n]: '
+    read -r -p 'Which port do you want NGINX Ingress Controller to use: ["'${INGRESS_PORT}'"] '
+    if [ -z "${REPLY}" ]; then
+      # Set Ingress Controller port
+      INGRESS_PORT=${INGRESS_PORT}
+    else
+      # Set Ingress Controller port
+      INGRESS_PORT=${REPLY}
+    fi
+
+    read -r -p 'Install NGINX Ingress Controller using a NodePort on port "'${INGRESS_PORT}'" [y/n]: '
     if [[ "${REPLY}" == 'y' ]]; then
+
       echo "########################################################################################"
       echo "#  Waiting for NGINX Ingress Controller to start"
       echo "########################################################################################" 
@@ -95,6 +126,10 @@ if [[ "$1" == "install" ]]; then
       # Other Cluster configuration
       helm install ${INGRESS_HELM_CHART} ${INGRESS_HELM_CHART}/ingress-nginx \
       --namespace ${INGRESS_NAMESPACE} --create-namespace \
+      --set controller.hostPort.enabled=true \
+      --set controller.service.type=NodePort \
+      --set controller.service.nodePorts.https=31999 \
+      --set controller.updateStrategy.rollingUpdate.maxUnavailable=1 \
       --wait --timeout=60s
 
     # Workaround for `tls: failed to verify certificate: x509: certificate signed by unknown authority` error
@@ -103,7 +138,7 @@ if [[ "$1" == "install" ]]; then
 
     else
       echo "########################################################################################"
-      echo "#  Skipping NGINX Ingress Controller installation"
+      echo "#  Skipping NGINX Development Ingress Controller installation"
       echo "########################################################################################"
     fi
 
@@ -203,6 +238,7 @@ if [[ "$1" == "install" ]]; then
         --set worker.redis.namespace=${REDIS_NAMESPACE} \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
         --set initContainers.enabled=false \
+        --set environment=${CODESEALER_ENV} \
         --wait --timeout=90s
 
       echo "########################################################################################"
@@ -221,6 +257,7 @@ if [[ "$1" == "install" ]]; then
         --set worker.ingress.port=${INGRESS_PORT} \
         --set worker.redis.namespace=${REDIS_NAMESPACE} \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+        --set environment=${CODESEALER_ENV} \
         --wait --timeout=90s
     fi
 
@@ -245,11 +282,17 @@ if [[ "$1" == "install" ]]; then
     echo "########################################################################################"
     read -r -p 'Restart Ingress Controller? [y/n]: '
     if [[ "${REPLY}" == 'y' ]]; then
-      kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
-      echo "########################################################################################"
-      echo "#  Waiting for NGINX Ingress Controller to restart"
-      echo "########################################################################################"  
-      kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
+
+      if [[ "${CODESEALER_ENV}" == "PROD" ]]; then
+
+      else
+        kubectl rollout restart deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE}
+        echo "########################################################################################"
+        echo "#  Waiting for NGINX Ingress Controller to restart"
+        echo "########################################################################################"  
+        kubectl rollout status deployment/${INGRESS_DEPLOYMENT} --namespace ${INGRESS_NAMESPACE} --watch
+      fi
+
     else
       echo "########################################################################################"
       echo "#  Skipping Ingress Controller Restart"
@@ -267,6 +310,7 @@ if [[ "$1" == "install" ]]; then
       --set worker.ingress.port=${INGRESS_PORT} \
       --set worker.redis.namespace=${REDIS_NAMESPACE} \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
+      --set environment=${CODESEALER_ENV} \
       --set manager.enabled=true \
       --wait --timeout=90s
   else
