@@ -30,8 +30,9 @@ initContainers:
   image: codesealer-init-networking
   tag: latest
 
-# Deplopyment configuration [PROD/DEVELOP]
-environment: DEVELOP
+# Deplopyment configuration [Production/Development]
+development: 
+  enabled: true
 
 webhook:
   name: codesealer-mutating-webhook

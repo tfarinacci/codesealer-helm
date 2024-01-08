@@ -44,6 +44,7 @@ export REDIS_NAMESPACE=redis
 # Default settings
 INGRESS_PORT=443
 INGRESS_NODEPORT=31443
+CODESEALER_DEVELOPMENT=false
 CODESEALER_CNI=false
 
 
@@ -75,7 +76,7 @@ if [[ "$1" == "install" ]]; then
   if [[ "${REPLY}" == [Pp][Rr][Oo][Dd] ]]; then
 
     # Set environment
-    CODESEALER_ENV=PROD
+    CODESEALER_DEVELOPMENT=false
   
     echo "########################################################################################"
     echo "#  Do you wish to install NGINX Ingress Controller using a LoadBalancer configuration?"
@@ -101,7 +102,7 @@ if [[ "$1" == "install" ]]; then
   else
 
     # Set environment
-    CODESEALER_ENV=DEVELOP
+    CODESEALER_DEVELOPMENT=true
 
     echo "########################################################################################"
     echo "#  Configuring NGINX Ingress Controller using a NodePort configuration?"
@@ -141,7 +142,7 @@ if [[ "$1" == "install" ]]; then
     kubectl patch validatingwebhookconfigurations ingress-nginx-admission --type='json' -p='[{"op": "add", "path": "/webhooks/0/clientConfig/caBundle", "value":"'$CA'"}]'  
 
     else
-    
+
       echo "########################################################################################"
       echo "#  Skipping NGINX Development Ingress Controller installation - enter Ingress Controller"
       echo "#  configuration:"
@@ -236,7 +237,7 @@ if [[ "$1" == "install" ]]; then
       --set worker.ingress.port="${INGRESS_PORT}" \
       --set worker.redis.namespace="${REDIS_NAMESPACE}" \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --set environment="${CODESEALER_ENV}" \
+      --set development.enabled="${CODESEALER_DEVELOPMENT}" \
       --set worker.replicaCount="${CODESEALER_WORKERS}" \
       --set manager.enabled=true \
       --wait --timeout=60s
@@ -269,7 +270,7 @@ if [[ "$1" == "install" ]]; then
       echo "########################################################################################"
       echo "#  To access Juice Shop application:"
       echo "#  "
-      if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
+      if [[ "${CODESEALER_DEVELOPMENT}" == true ]]; then
         echo "#  https://localhost:${INGRESS_NODEPORT}"
       else
         echo "#  https://localhost:${INGRESS_PORT}"
@@ -301,7 +302,7 @@ if [[ "$1" == "install" ]]; then
         --set worker.redis.namespace="${REDIS_NAMESPACE}" \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
         --set initContainers.enabled=false \
-        --set environment="${CODESEALER_ENV}" \
+        --set development.enabled="${CODESEALER_DEVELOPMENT}" \
         --wait --timeout=60s
 
       echo "########################################################################################"
@@ -321,7 +322,7 @@ if [[ "$1" == "install" ]]; then
         --set worker.ingress.nodePort="${INGRESS_NODEPORT}" \
         --set worker.redis.namespace="${REDIS_NAMESPACE}" \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-        --set environment="${CODESEALER_ENV}" \
+        --set development.enabled="${CODESEALER_DEVELOPMENT}" \
         --wait --timeout=60s
     fi
 
@@ -353,7 +354,7 @@ if [[ "$1" == "install" ]]; then
     read -r -p 'Restart Ingress Controller? [y/n]: '
     if [[ "${REPLY}" == 'y' ]]; then
 
-      if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
+      if [[ "${CODESEALER_DEVELOPMENT}" == true ]]; then
         # Use force delete instead
         kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=0
         sleep 5
@@ -479,7 +480,7 @@ elif [[ "$1" == "upgrade" ]]; then
       --set worker.ingress.port="${INGRESS_PORT}" \
       --set worker.redis.namespace="${REDIS_NAMESPACE}" \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --set environment="${CODESEALER_ENV}" \
+      --set development.enabled="${CODESEALER_DEVELOPMENT}" \
       --set worker.replicaCount="${CODESEALER_WORKERS}" \
       --set manager.enabled=true \
       --wait --timeout=60s
@@ -510,7 +511,7 @@ elif [[ "$1" == "upgrade" ]]; then
         --set worker.redis.namespace="${REDIS_NAMESPACE}" \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
         --set initContainers.enabled=false \
-        --set environment="${CODESEALER_ENV}" \
+        --set development.enabled="${CODESEALER_DEVELOPMENT}" \
         --wait --timeout=60s
 
       echo "########################################################################################"
@@ -530,7 +531,7 @@ elif [[ "$1" == "upgrade" ]]; then
         --set worker.ingress.nodePort="${INGRESS_NODEPORT}" \
         --set worker.redis.namespace="${REDIS_NAMESPACE}" \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-        --set environment="${CODESEALER_ENV}" \
+        --set development.enabled="${CODESEALER_DEVELOPMENT}" \
         --wait --timeout=60s
     fi
 
@@ -562,7 +563,7 @@ elif [[ "$1" == "upgrade" ]]; then
     read -r -p 'Restart Ingress Controller? [y/n]: '
     if [[ "${REPLY}" == 'y' ]]; then
 
-      if [[ "${CODESEALER_ENV}" == "DEVELOP" ]]; then
+      if [[ "${CODESEALER_DEVELOPMENT}" == true ]]; then
         # Use force delete instead
         kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=0
         sleep 5
