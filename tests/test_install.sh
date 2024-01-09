@@ -44,7 +44,7 @@ export REDIS_NAMESPACE=redis
 # Default settings
 INGRESS_PORT=443
 INGRESS_NODEPORT=31443
-CODESEALER_DEVELOPMENT=false
+CODESEALER_NODEPORT=false
 CODESEALER_CNI=false
 
 
@@ -63,20 +63,20 @@ if [[ "$1" == "install" ]]; then
   echo "#  This installation also will configure your Ingress Controller to operate in one the "
   echo "#  following 2 Kubernetes Ingress Controller service types:"
   echo "#  "
-  echo "#     1. NodePort - DEVELOP (default)"
+  echo "#     1. NodePort (default)"
   echo "#        Use for local installations that do not support a LoadBalancer configuration."
   echo "#        This is the default installation mode."
-  echo "#     2. LoadBalancer - PROD"
+  echo "#     2. LoadBalancer"
   echo "#        Use on Production implementations or local configurations that support routing"
-  echo "#        to local LoadBalancer over port 443.  Some MacBooks using Docker Desktop with"
-  echo "#        Kubernetes support this configuration."
+  echo "#        to local LoadBalancer over port 443.  MacBooks using Docker Desktop with"
+  echo "#        Kubernetes may support this configuration."
   echo "#  "
   echo "########################################################################################"
-  read -r -p 'Which Ingress Controller configuration? [DEVELOP/PROD]: '
-  if [[ "${REPLY}" == [Pp][Rr][Oo][Dd] ]]; then
+  read -r -p 'Which Ingress Controller configuration? [NodePort/LoadBalancer]: '
+  if [[ "${REPLY}" == [Lo][Oo][Aa][Dd][Bb][Aa][Ll][Aa][Nn][Cc][Ee][Rr] ]]; then
 
     # Set environment
-    CODESEALER_DEVELOPMENT=false
+    CODESEALER_NODEPORT=false
   
     echo "########################################################################################"
     echo "#  Do you wish to install NGINX Ingress Controller using a LoadBalancer configuration?"
@@ -102,7 +102,7 @@ if [[ "$1" == "install" ]]; then
   else
 
     # Set environment
-    CODESEALER_DEVELOPMENT=true
+    CODESEALER_NODEPORT=true
 
     echo "########################################################################################"
     echo "#  Configuring NGINX Ingress Controller using a NodePort configuration?"
@@ -237,7 +237,7 @@ if [[ "$1" == "install" ]]; then
       --set worker.ingress.port="${INGRESS_PORT}" \
       --set worker.redis.namespace="${REDIS_NAMESPACE}" \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --set development.enabled="${CODESEALER_DEVELOPMENT}" \
+      --set ingress.nodePort.enabled="${CODESEALER_NODEPORT}" \
       --set worker.replicaCount="${CODESEALER_WORKERS}" \
       --set manager.enabled=true \
       --wait --timeout=60s
@@ -270,7 +270,7 @@ if [[ "$1" == "install" ]]; then
       echo "########################################################################################"
       echo "#  To access Juice Shop application:"
       echo "#  "
-      if [[ "${CODESEALER_DEVELOPMENT}" == true ]]; then
+      if [[ "${CODESEALER_NODEPORT}" == true ]]; then
         echo "#  https://localhost:${INGRESS_NODEPORT}"
       else
         echo "#  https://localhost:${INGRESS_PORT}"
@@ -302,7 +302,7 @@ if [[ "$1" == "install" ]]; then
         --set worker.redis.namespace="${REDIS_NAMESPACE}" \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
         --set initContainers.enabled=false \
-        --set development.enabled="${CODESEALER_DEVELOPMENT}" \
+        --set ingress.nodePort.enabled="${CODESEALER_NODEPORT}" \
         --wait --timeout=60s
 
       echo "########################################################################################"
@@ -322,7 +322,7 @@ if [[ "$1" == "install" ]]; then
         --set worker.ingress.nodePort="${INGRESS_NODEPORT}" \
         --set worker.redis.namespace="${REDIS_NAMESPACE}" \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-        --set development.enabled="${CODESEALER_DEVELOPMENT}" \
+        --set ingress.nodePort.enabled="${CODESEALER_NODEPORT}" \
         --wait --timeout=60s
     fi
 
@@ -354,7 +354,7 @@ if [[ "$1" == "install" ]]; then
     read -r -p 'Restart Ingress Controller? [y/n]: '
     if [[ "${REPLY}" == 'y' ]]; then
 
-      if [[ "${CODESEALER_DEVELOPMENT}" == true ]]; then
+      if [[ "${CODESEALER_NODEPORT}" == true ]]; then
         # Use force delete instead
         kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=0
         sleep 5
@@ -480,7 +480,7 @@ elif [[ "$1" == "upgrade" ]]; then
       --set worker.ingress.port="${INGRESS_PORT}" \
       --set worker.redis.namespace="${REDIS_NAMESPACE}" \
       --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-      --set development.enabled="${CODESEALER_DEVELOPMENT}" \
+      --set ingress.nodePort.enabled="${CODESEALER_NODEPORT}" \
       --set worker.replicaCount="${CODESEALER_WORKERS}" \
       --set manager.enabled=true \
       --wait --timeout=60s
@@ -511,7 +511,7 @@ elif [[ "$1" == "upgrade" ]]; then
         --set worker.redis.namespace="${REDIS_NAMESPACE}" \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
         --set initContainers.enabled=false \
-        --set development.enabled="${CODESEALER_DEVELOPMENT}" \
+        --set ingress.nodePort.enabled="${CODESEALER_NODEPORT}" \
         --wait --timeout=60s
 
       echo "########################################################################################"
@@ -531,7 +531,7 @@ elif [[ "$1" == "upgrade" ]]; then
         --set worker.ingress.nodePort="${INGRESS_NODEPORT}" \
         --set worker.redis.namespace="${REDIS_NAMESPACE}" \
         --set worker.config.bootloader.redisPassword="${REDIS_PASSWORD}" \
-        --set development.enabled="${CODESEALER_DEVELOPMENT}" \
+        --set ingress.nodePort.enabled="${CODESEALER_NODEPORT}" \
         --wait --timeout=60s
     fi
 
@@ -563,7 +563,7 @@ elif [[ "$1" == "upgrade" ]]; then
     read -r -p 'Restart Ingress Controller? [y/n]: '
     if [[ "${REPLY}" == 'y' ]]; then
 
-      if [[ "${CODESEALER_DEVELOPMENT}" == true ]]; then
+      if [[ "${CODESEALER_NODEPORT}" == true ]]; then
         # Use force delete instead
         kubectl scale deployment "${INGRESS_DEPLOYMENT}" --namespace "${INGRESS_NAMESPACE}" --replicas=0
         sleep 5
