@@ -822,7 +822,8 @@ manager:
   enabled: false
   name: core-manager
   restartPolicy: Always
-  image: release/core-manager
+  # image: release/core-manager
+  image: core-manager
   tag: latest
 
   service:
