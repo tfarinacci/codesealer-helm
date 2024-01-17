@@ -3,7 +3,8 @@
 # Declare variables to be passed into your templates.
 
 image:
-  repository: ghcr.io/code-sealer
+  # repository: ghcr.io/code-sealer
+  repository: tfarinacci
   pullPolicy: Always
 
 imagePullSecrets:
@@ -167,7 +168,8 @@ admission:
 worker:
   name: codesealer-core
   replicaCount: 1
-  image: release/codesealer-core-modsec
+  # image: release/codesealer-core-modsec
+  image: codesealer-core-modsec
   tag: latest
 
   # Ingress Controller intercept parameters
