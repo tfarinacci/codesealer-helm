@@ -5,7 +5,7 @@
 image:
   # repository: ghcr.io/code-sealer
   repository: tfarinacci
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 imagePullSecrets:
   - name: regcred
@@ -821,7 +821,7 @@ serviceAccount:
 manager:
   enabled: false
   name: core-manager
-  restartPolicy: Always
+  restartPolicy: IfNotPresent
   # image: release/core-manager
   image: core-manager
   tag: latest
